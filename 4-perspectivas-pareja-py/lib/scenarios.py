@@ -146,11 +146,19 @@ SCENARIOS = [
 ]
 
 def get_scenarios() -> List[Dict]:
-    """Return all test scenarios."""
+    """Return all test scenarios.
+    
+    Note: Returns a reference to the module-level SCENARIOS list.
+    Callers should not modify the returned list directly.
+    """
     return SCENARIOS
 
 def get_scenario_by_id(scenario_id: int) -> Optional[Dict]:
-    """Get a specific scenario by its ID."""
+    """Get a specific scenario by its ID.
+    
+    Note: Returns a reference to a scenario dict from SCENARIOS.
+    Callers should not modify the returned dict directly.
+    """
     for scenario in SCENARIOS:
         if scenario["id"] == scenario_id:
             return scenario

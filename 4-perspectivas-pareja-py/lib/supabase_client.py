@@ -9,6 +9,9 @@ load_dotenv()
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 
+# Global singleton client instance
+# Note: This implementation is not thread-safe. For production use with
+# multi-threaded servers, consider using threading.Lock for initialization.
 supabase: Optional[Client] = None
 
 def get_supabase_client() -> Client:
