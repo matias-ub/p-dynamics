@@ -1,5 +1,6 @@
 """Test scenarios and questions for the couples assessment."""
 from typing import Optional, List, Dict
+import copy
 
 SCENARIOS = [
     {
@@ -148,18 +149,16 @@ SCENARIOS = [
 def get_scenarios() -> List[Dict]:
     """Return all test scenarios.
     
-    Note: Returns a reference to the module-level SCENARIOS list.
-    Callers should not modify the returned list directly.
+    Returns a deep copy to prevent modifications to the original data.
     """
-    return SCENARIOS
+    return copy.deepcopy(SCENARIOS)
 
 def get_scenario_by_id(scenario_id: int) -> Optional[Dict]:
     """Get a specific scenario by its ID.
     
-    Note: Returns a reference to a scenario dict from SCENARIOS.
-    Callers should not modify the returned dict directly.
+    Returns a deep copy to prevent modifications to the original data.
     """
     for scenario in SCENARIOS:
         if scenario["id"] == scenario_id:
-            return scenario
+            return copy.deepcopy(scenario)
     return None
