@@ -27,7 +27,7 @@ class AuthState(rx.State):
                 self.user_email = response.user.email
                 self.is_authenticated = True
                 self.error_message = ""
-                return rx.redirect("/test")
+                yield rx.redirect("/test")
             else:
                 self.error_message = "Login failed. Please check your credentials."
         except Exception as e:
@@ -47,7 +47,7 @@ class AuthState(rx.State):
                 self.user_email = response.user.email
                 self.is_authenticated = True
                 self.error_message = ""
-                return rx.redirect("/test")
+                yield rx.redirect("/test")
             else:
                 self.error_message = "Sign up failed. Please try again."
         except Exception as e:
@@ -64,7 +64,7 @@ class AuthState(rx.State):
             self.couple_id = ""
             self.partner_id = ""
             self.error_message = ""
-            return rx.redirect("/login")
+            yield rx.redirect("/login")
         except Exception as e:
             self.error_message = f"Error: {str(e)}"
     

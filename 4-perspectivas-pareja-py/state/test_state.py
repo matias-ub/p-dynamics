@@ -46,7 +46,7 @@ class TestState(rx.State):
                 self.current_question_index = 0
             else:
                 self.test_completed = True
-                return rx.redirect("/results")
+                yield rx.redirect("/results")
     
     def previous_question(self):
         """Move to the previous question."""
