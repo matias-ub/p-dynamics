@@ -1,4 +1,5 @@
 """Test scenarios and questions for the couples assessment."""
+from typing import Optional, List, Dict
 
 SCENARIOS = [
     {
@@ -144,11 +145,11 @@ SCENARIOS = [
     }
 ]
 
-def get_scenarios():
+def get_scenarios() -> List[Dict]:
     """Return all test scenarios."""
     return SCENARIOS
 
-def get_scenario_by_id(scenario_id: int):
+def get_scenario_by_id(scenario_id: int) -> Optional[Dict]:
     """Get a specific scenario by its ID."""
     for scenario in SCENARIOS:
         if scenario["id"] == scenario_id:
