@@ -76,10 +76,11 @@ pip install -r requirements.txt
 ```
 
 3. Configura las variables de entorno:
-- Copia el archivo `.env` y completa con tus credenciales de Supabase:
+- Copia el archivo `.env.example` a `.env` y completa con tus credenciales de Supabase:
 ```env
 SUPABASE_URL=tu_url_de_supabase
 SUPABASE_KEY=tu_clave_de_supabase
+APP_URL=http://localhost:3000  # O tu URL de producción
 ```
 
 4. Inicializa Reflex:
