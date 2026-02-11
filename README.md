@@ -30,6 +30,9 @@ p-dynamics/
 ├── rxconfig.py              # Configuración de Reflex
 ├── .reflex/                 # Directorio de Reflex (generado)
 ├── assets/                  # Archivos estáticos
+├── supabase/                # Supabase configuration
+│   └── migrations/          # SQL migration files
+│       └── 001_initial_schema.sql
 ├── p_dynamics/              # Código fuente principal
 │   ├── __init__.py
 │   ├── p_dynamics.py        # Archivo principal de la aplicación
@@ -130,10 +133,21 @@ Los componentes se encuentran en el directorio `p_dynamics/components/`. Cada co
 
 ### Configuración de Supabase
 
-Asegúrate de crear las siguientes tablas en tu base de datos de Supabase:
-- `users` - Para almacenar información de usuarios
-- `couples` - Para relacionar parejas
-- `test_responses` - Para guardar respuestas del test
+El schema de la base de datos está en `supabase/migrations/001_initial_schema.sql`. Puedes ejecutarlo directamente en el SQL Editor de Supabase o usar el Supabase CLI:
+
+```bash
+# Con Supabase CLI
+supabase db push
+```
+
+**Tablas principales:**
+- `profiles` - Extensión de auth.users con datos del perfil
+- `couples` - Relación de parejas con invite_code
+- `scenario_packs` - Paquetes de escenarios versionados
+- `scenarios` - Escenarios individuales
+- `scenario_options` - Opciones de respuesta por escenario
+- `tests` - Instancias de tests realizados
+- `responses` - Respuestas de usuarios (4 perspectivas por escenario)
 
 ## Tecnologías
 
