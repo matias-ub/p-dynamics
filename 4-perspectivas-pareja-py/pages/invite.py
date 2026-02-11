@@ -1,12 +1,14 @@
 """Invite page for sharing with partner."""
 import reflex as rx
+import os
 from state.auth_state import AuthState
 from components.couple_invite import couple_invite
 
 
 def invite() -> rx.Component:
     """Invite page for partner."""
-    invite_link = f"https://yourapp.com/join/{AuthState.couple_id}"
+    app_url = os.getenv("APP_URL", "http://localhost:3000")
+    invite_link = f"{app_url}/join/{AuthState.couple_id}"
     
     return rx.container(
         rx.vstack(
