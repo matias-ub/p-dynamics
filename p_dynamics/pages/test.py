@@ -2,7 +2,6 @@
 import reflex as rx
 from ..state.test_state import TestState
 from ..components.scenario_card import scenario_card
-from ..components.question import question_component
 
 
 def test() -> rx.Component:
@@ -16,7 +15,7 @@ def test() -> rx.Component:
                     size="7"
                 ),
                 rx.text(
-                    f"Progreso: {TestState.get_progress():.0f}%",
+                    f"Progreso: {TestState.get_progress}%",
                     size="3",
                     color="gray"
                 ),
@@ -26,19 +25,44 @@ def test() -> rx.Component:
             ),
             # Progress bar
             rx.progress(
-                value=TestState.get_progress(),
+                value=TestState.get_progress,
                 width="100%",
                 margin_bottom="2rem"
             ),
             # Current scenario card
             rx.cond(
-                TestState.get_current_scenario(),
-                scenario_card(TestState.get_current_scenario())
+                TestState.current_scenario,
+                scenario_card(TestState.current_scenario)
             ),
             # Current question
             rx.cond(
-                TestState.get_current_question(),
-                question_component(TestState.get_current_question())
+                TestState.current_question,
+                rx.vstack(
+                    rx.heading(
+                        TestState.current_question["text"],
+                        size="5",
+                        margin_bottom="1rem"
+                    ),
+                    rx.vstack(
+                        rx.foreach(
+                            TestState.question_options,
+                            lambda option, index: rx.button(
+                                option,
+                                on_click=TestState.answer_question(TestState.current_question["id"], index),
+                                width="100%",
+                                variant="outline",
+                                size="3",
+                                margin_bottom="0.5rem"
+                            )
+                        ),
+                        spacing="2",
+                        width="100%"
+                    ),
+                    spacing="4",
+                    align="start",
+                    width="100%",
+                    padding="1rem"
+                )
             ),
             # Navigation buttons
             rx.hstack(

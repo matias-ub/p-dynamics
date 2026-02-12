@@ -2,17 +2,17 @@
 import reflex as rx
 
 
-def scenario_card(scenario: dict) -> rx.Component:
+def scenario_card(scenario) -> rx.Component:
     """Display a scenario card with title and description."""
     return rx.card(
         rx.vstack(
             rx.heading(
-                scenario.get("title", ""),
+                scenario["title"],
                 size="6",
                 margin_bottom="0.5rem"
             ),
             rx.text(
-                scenario.get("description", ""),
+                scenario["description"],
                 color="gray",
                 size="3"
             ),

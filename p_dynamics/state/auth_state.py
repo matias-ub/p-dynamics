@@ -13,13 +13,25 @@ class AuthState(rx.State):
     partner_id: str = ""
     error_message: str = ""
     
-    def login(self, email: str, password: str):
+    # Form fields
+    email: str = ""
+    password: str = ""
+    
+    def set_email(self, value: str):
+        """Set email field."""
+        self.email = value
+    
+    def set_password(self, value: str):
+        """Set password field."""
+        self.password = value
+    
+    def login(self):
         """Login user with email and password."""
         try:
             supabase = get_supabase_client()
             response = supabase.auth.sign_in_with_password({
-                "email": email,
-                "password": password
+                "email": self.email,
+                "password": self.password
             })
             
             if response.user:
@@ -33,13 +45,13 @@ class AuthState(rx.State):
         except Exception as e:
             self.error_message = f"Error: {str(e)}"
     
-    def signup(self, email: str, password: str):
+    def signup(self):
         """Sign up new user."""
         try:
             supabase = get_supabase_client()
             response = supabase.auth.sign_up({
-                "email": email,
-                "password": password
+                "email": self.email,
+                "password": self.password
             })
             
             if response.user:

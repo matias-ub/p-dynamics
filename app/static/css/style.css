@@ -1,0 +1,48 @@
+/* Custom styles for P-Dynamics */
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+.footer {
+    margin-top: auto;
+}
+
+/* Card hover effects */
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+/* Button styles */
+.btn-lg.text-start {
+    padding: 1rem 1.5rem;
+    white-space: normal;
+    text-align: left !important;
+}
+
+.btn-lg.text-start:hover {
+    transform: translateX(5px);
+    transition: transform 0.2s ease;
+}
+
+/* Progress bar animation */
+.progress-bar {
+    transition: width 0.6s ease;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container {
+        padding: 0 15px;
+    }
+}

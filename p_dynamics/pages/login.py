@@ -29,31 +29,27 @@ def login() -> rx.Component:
                         type="email",
                         size="3",
                         width="100%",
-                        id="email"
+                        value=AuthState.email,
+                        on_change=AuthState.set_email
                     ),
                     rx.input(
                         placeholder="Contraseña",
                         type="password",
                         size="3",
                         width="100%",
-                        id="password"
+                        value=AuthState.password,
+                        on_change=AuthState.set_password
                     ),
                     rx.hstack(
                         rx.button(
                             "Iniciar Sesión",
-                            on_click=AuthState.login(
-                                rx.get_value("email"),
-                                rx.get_value("password")
-                            ),
+                            on_click=AuthState.login,
                             size="3",
                             width="100%"
                         ),
                         rx.button(
                             "Registrarse",
-                            on_click=AuthState.signup(
-                                rx.get_value("email"),
-                                rx.get_value("password")
-                            ),
+                            on_click=AuthState.signup,
                             size="3",
                             width="100%",
                             variant="outline"

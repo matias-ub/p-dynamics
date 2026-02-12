@@ -1,6 +1,6 @@
 """Test state management for quiz flow."""
 import reflex as rx
-from typing import Dict, List
+from typing import Dict, List, Any
 from ..lib.scenarios import get_scenarios, get_scenario_by_id
 
 
@@ -12,19 +12,29 @@ class TestState(rx.State):
     answers: Dict[str, int] = {}
     test_completed: bool = False
     
-    def get_current_scenario(self):
+    @rx.var
+    def current_scenario(self) -> Dict[str, Any]:
         """Get the current scenario."""
         scenarios = get_scenarios()
         if self.current_scenario_index < len(scenarios):
             return scenarios[self.current_scenario_index]
-        return None
+        return {}
     
-    def get_current_question(self):
+    @rx.var
+    def current_question(self) -> Dict[str, Any]:
         """Get the current question."""
-        scenario = self.get_current_scenario()
-        if scenario and self.current_question_index < len(scenario["questions"]):
+        scenario = self.current_scenario
+        if scenario and self.current_question_index < len(scenario.get("questions", [])):
             return scenario["questions"][self.current_question_index]
-        return None
+        return {}
+    
+    @rx.var
+    def question_options(self) -> List[str]:
+        """Get the current question options as a list of text strings."""
+        question = self.current_question
+        if question:
+            return [opt.get("text", "") for opt in question.get("options", [])]
+        return []
     
     def answer_question(self, question_id: str, answer_index: int):
         """Record an answer for a question."""
@@ -32,7 +42,7 @@ class TestState(rx.State):
     
     def next_question(self):
         """Move to the next question."""
-        scenario = self.get_current_scenario()
+        scenario = self.current_scenario
         if not scenario:
             return
         
@@ -56,16 +66,17 @@ class TestState(rx.State):
             # Move to previous scenario
             if self.current_scenario_index > 0:
                 self.current_scenario_index -= 1
-                scenario = self.get_current_scenario()
+                scenario = self.current_scenario
                 if scenario:
-                    self.current_question_index = len(scenario["questions"]) - 1
+                    self.current_question_index = len(scenario.get("questions", [])) - 1
     
-    def get_progress(self) -> float:
+    @rx.var
+    def get_progress(self) -> int:
         """Calculate test progress percentage."""
         scenarios = get_scenarios()
         total_questions = sum(len(s["questions"]) for s in scenarios)
         answered_questions = len(self.answers)
-        return (answered_questions / total_questions * 100) if total_questions > 0 else 0
+        return int((answered_questions / total_questions * 100)) if total_questions > 0 else 0
     
     def reset_test(self):
         """Reset test to initial state."""
