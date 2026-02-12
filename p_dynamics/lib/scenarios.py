@@ -230,20 +230,40 @@ async def get_scenarios(pack_name: str = "cotidiano-v1") -> List[Dict]:
         scenarios_data = scenarios_response.data
         logger.info(f"Encontrados {len(scenarios_data)} escenarios")
         
-        # 3. Para cada escenario, obtener sus opciones ordenadas
+        # 3. Obtener todas las opciones de todos los escenarios en una sola consulta
+        scenario_ids = [scenario["id"] for scenario in scenarios_data]
+        logger.info(f"Obteniendo opciones para {len(scenario_ids)} escenarios en una sola consulta")
+
+        options_response = supabase.table("scenario_options")\
+            .select("scenario_id, key, text, tags, order_num, is_positive")\
+            .in_("scenario_id", scenario_ids)\
+            .order("scenario_id")\
+            .order("order_num")\
+            .execute()
+
+        options_data = options_response.data or []
+        logger.info(f"Encontradas {len(options_data)} opciones en total")
+
+        # Agrupar opciones por escenario_id
+        options_by_scenario_id: Dict[int, List[dict]] = {}
+        for option in options_data:
+            sid = option["scenario_id"]
+            if sid not in options_by_scenario_id:
+                options_by_scenario_id[sid] = []
+            options_by_scenario_id[sid].append({
+                "key": option["key"],
+                "text": option["text"],
+                "tags": option.get("tags"),
+                "order_num": option["order_num"],
+                "is_positive": option.get("is_positive"),
+            })
+
+        # Asignar opciones agrupadas a cada escenario
         for scenario in scenarios_data:
-            scenario_id = scenario["id"]
-            
-            logger.debug(f"Obteniendo opciones para escenario: {scenario['key']}")
-            options_response = supabase.table("scenario_options")\
-                .select("key, text, tags, order_num, is_positive")\
-                .eq("scenario_id", scenario_id)\
-                .order("order_num")\
-                .execute()
-            
-            # Agregar las opciones al escenario
-            scenario["options"] = options_response.data if options_response.data else []
-            logger.debug(f"Escenario '{scenario['key']}': {len(scenario['options'])} opciones cargadas")
+            sid = scenario["id"]
+            scenario_options = options_by_scenario_id.get(sid, [])
+            scenario["options"] = scenario_options
+            logger.debug(f"Escenario '{scenario['key']}': {len(scenario_options)} opciones cargadas")
         
         logger.info(f"✓ Carga completa: {len(scenarios_data)} escenarios con sus opciones")
         return scenarios_data
