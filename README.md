@@ -4,7 +4,7 @@ Test interactivo para parejas que compara deseos personales, percepción del otr
 
 ## Descripción
 
-Este proyecto es una aplicación web construida con [Reflex](https://reflex.dev/) que ayuda a las parejas a entender mejor su relación a través de un test de 4 perspectivas:
+Aplicación web construida con **FastAPI**, **Jinja2** y **HTMX** que ayuda a las parejas a entender mejor su relación a través de un test de 4 perspectivas:
 
 1. **Perspectiva Personal**: ¿Qué prefiero yo?
 2. **Perspectiva Empática**: ¿Qué creo que prefiere mi pareja?
@@ -13,60 +13,51 @@ Este proyecto es una aplicación web construida con [Reflex](https://reflex.dev/
 
 ## Características
 
-- Autenticación de usuarios con Supabase
-- Test interactivo con múltiples escenarios
-- Sistema de invitación para parejas
-- Cálculo automático de scores:
+- 🔐 Autenticación de usuarios con Supabase
+- 📝 Test interactivo con múltiples escenarios
+- 👥 Sistema de invitación para parejas
+- 📊 Cálculo automático de scores:
   - Score de Alineación
   - Score de Empatía
   - Score de Salud Relacional
-- Visualización de resultados con gráficos radar
-- Interfaz responsive y moderna
+- 📈 Visualización de resultados con dimensiones
+- 📱 Interfaz responsive con Bootstrap
+- ⚡ HTMX para interactividad sin JavaScript complejo
 
 ## Estructura del Proyecto
 
 ```
 p-dynamics/
-├── rxconfig.py              # Configuración de Reflex
-├── .reflex/                 # Directorio de Reflex (generado)
-├── assets/                  # Archivos estáticos
-├── supabase/                # Supabase configuration
-│   └── migrations/          # SQL migration files
-│       └── 001_initial_schema.sql
-├── p_dynamics/              # Código fuente principal
-│   ├── __init__.py
-│   ├── p_dynamics.py        # Archivo principal de la aplicación
-│   ├── pages/               # Páginas de la aplicación
-│   │   ├── __init__.py
-│   │   ├── index.py         # Página de inicio
-│   │   ├── login.py         # Login/registro
-│   │   ├── test.py          # Test interactivo
-│   │   ├── results.py       # Resultados
-│   │   └── invite.py        # Invitación a pareja
-│   ├── components/          # Componentes reutilizables
-│   │   ├── __init__.py
-│   │   ├── scenario_card.py # Tarjeta de escenario
-│   │   ├── question.py      # Componente de pregunta
-│   │   ├── radar_chart.py   # Gráfico radar
-│   │   └── couple_invite.py # Componente de invitación
-│   ├── state/               # Gestión de estado
-│   │   ├── __init__.py
-│   │   ├── auth_state.py    # Estado de autenticación
-│   │   ├── test_state.py    # Estado del test
-│   │   └── scoring.py       # Cálculos de scores
-│   └── lib/                 # Utilidades
-│       ├── __init__.py
+├── app/                     # Aplicación FastAPI
+│   ├── main.py             # Punto de entrada de la aplicación
+│   ├── routes/             # Rutas de la API
+│   │   ├── auth.py         # Login/registro
+│   │   ├── test.py         # Test interactivo
+│   │   └── results.py      # Resultados
+│   ├── templates/          # Templates Jinja2
+│   │   ├── base.html       # Template base
+│   │   ├── login.html      # Página de login
+│   │   ├── test.html       # Página del test
+│   │   └── results.html    # Página de resultados
+│   └── static/             # Archivos estáticos
+│       └── css/
+│           └── style.css   # Estilos personalizados
+├── p_dynamics/             # Lógica de negocio
+│   └── lib/                # Utilidades
 │       ├── supabase_client.py  # Cliente de Supabase
-│       └── scenarios.py     # Escenarios del test
-├── requirements.txt         # Dependencias Python
-├── .env.example             # Variables de entorno de ejemplo
-└── README.md                # Este archivo
+│       └── scenarios.py    # Escenarios del test
+├── supabase/               # Configuración de Supabase
+│   └── migrations/         # Migraciones SQL
+│       └── 001_initial_schema.sql
+├── requirements-fastapi.txt # Dependencias FastAPI
+├── .env.example            # Variables de entorno de ejemplo
+└── README.md               # Este archivo
 ```
 
 ## Requisitos
 
 - Python 3.8 o superior
-- pip
+- pip o [uv](https://github.com/astral-sh/uv) (recomendado)
 - Cuenta de Supabase (para autenticación y base de datos)
 
 ## Instalación
@@ -77,38 +68,47 @@ git clone https://github.com/matias-ub/p-dynamics.git
 cd p-dynamics
 ```
 
-2. Instala las dependencias:
+2. Crea un entorno virtual con uv (recomendado):
 ```bash
-pip install -r requirements.txt
+uv venv
 ```
 
-3. Configura las variables de entorno:
+3. Instala las dependencias:
+```bash
+# Con uv (recomendado)
+uv pip install -r requirements-fastapi.txt
+
+# O con pip tradicional
+pip install -r requirements-fastapi.txt
+```
+
+4. Configura las variables de entorno:
 - Copia el archivo `.env.example` a `.env` y completa con tus credenciales de Supabase:
 ```env
 SUPABASE_URL=tu_url_de_supabase
 SUPABASE_KEY=tu_clave_de_supabase
-APP_URL=http://localhost:3000  # O tu URL de producción
-```
-
-4. Inicializa Reflex:
-```bash
-reflex init
 ```
 
 ## Uso
 
 1. Inicia el servidor de desarrollo:
 ```bash
-reflex run
+# Con uv
+uv run uvicorn app.main:app --reload
+
+# O directamente con uvicorn
+uvicorn app.main:app --reload
 ```
 
-2. Abre tu navegador en `http://localhost:3000`
+2. Abre tu navegador en `http://localhost:8000`
 
-3. Crea una cuenta o inicia sesión
+3. Accede a la documentación interactiva en `http://localhost:8000/docs`
 
-4. Completa el test y comparte el enlace con tu pareja
+4. Crea una cuenta o inicia sesión
 
-5. Una vez que ambos hayan completado el test, visualiza los resultados
+5. Completa el test
+
+6. Visualiza tus resultados
 
 ## Desarrollo
 
@@ -122,23 +122,41 @@ Edita el archivo `p_dynamics/lib/scenarios.py` y agrega nuevos escenarios siguie
     "title": "Nuevo Escenario",
     "description": "Descripción del escenario",
     "questions": [
+        {
+            "id": "q4_1",
+            "text": "¿Pregunta del escenario?",
+            "options": [
+                {
+                    "text": "Opción 1",
+                    "tags": {"dimension1": 8, "dimension2": 5}
+                },
+                # ... más opciones
+            ]
+        }
         # 4 preguntas por escenario
     ]
 }
 ```
 
-### Modificar componentes
+### Modificar templates
 
-Los componentes se encuentran en el directorio `p_dynamics/components/`. Cada componente es una función que retorna un `rx.Component`.
+Los templates Jinja2 están en `app/templates/`. Cada template extiende de `base.html`.
+
+### Agregar nuevas rutas
+
+Crea nuevos archivos en `app/routes/` y regístralos en `app/main.py`:
+
+```python
+from .routes import nueva_ruta
+
+app.include_router(nueva_ruta.router, prefix="/ruta", tags=["tag"])
+```
 
 ### Configuración de Supabase
 
-El schema de la base de datos está en `supabase/migrations/001_initial_schema.sql`. Puedes ejecutarlo directamente en el SQL Editor de Supabase o usar el Supabase CLI:
+El schema de la base de datos está en `supabase/migrations/001_initial_schema.sql`. Puedes ejecutarlo directamente en el SQL Editor de Supabase.
 
-```bash
-# Con Supabase CLI
-supabase db push
-```
+**Nota:** Para el MVP actual, las sesiones de test se almacenan en memoria. Para producción, se recomienda usar Redis o guardar en base de datos.
 
 **Tablas principales:**
 - `profiles` - Extensión de auth.users con datos del perfil
@@ -151,10 +169,22 @@ supabase db push
 
 ## Tecnologías
 
-- [Reflex](https://reflex.dev/) - Framework web de Python
+- [FastAPI](https://fastapi.tiangolo.com/) - Framework web moderno y rápido
+- [Jinja2](https://jinja.palletsprojects.com/) - Motor de templates
+- [HTMX](https://htmx.org/) - Interactividad HTML moderna
+- [Bootstrap 5](https://getbootstrap.com/) - Framework CSS
 - [Supabase](https://supabase.com/) - Backend as a Service
-- [Plotly](https://plotly.com/) - Visualización de datos
+- [Plotly](https://plotly.com/) - Visualización de datos (futuro)
 - Python 3.8+
+
+## Próximos Pasos
+
+- [ ] Persistencia de sesiones en Redis/Base de datos
+- [ ] Sistema de parejas funcional (invitaciones)
+- [ ] Comparación de resultados entre parejas
+- [ ] Gráficos radar con Plotly
+- [ ] Verificación de email
+- [ ] Despliegue a producción
 
 ## Contribuir
 
