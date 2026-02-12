@@ -171,10 +171,10 @@ def calculate_scores(responses_a: Dict[str, int], responses_b: Dict[str, int]) -
         alineacion_scores.append(alineacion_escenario)
         
         # --- DIMENSIÓN 4: BALANCE PERSONAL VS RELACIONAL ---
-        # ¿Cuánto difiere el deseo propio de lo que considera "mejor para la pareja"?
-        # Para A: diferencia entre su deseo (Q1) y su visión de equidad (Q3)
+        # ¿Qué tan alineado está el deseo propio con lo que considera "mejor para la pareja"?
+        # Para A: similitud entre su deseo (Q1) y su visión de equidad (Q3)
         balance_a = calculate_similarity(tags_a_q1, tags_a_q3)
-        # Para B: diferencia entre su deseo (Q1) y su visión de equidad (Q3)
+        # Para B: similitud entre su deseo (Q1) y su visión de equidad (Q3)
         balance_b = calculate_similarity(tags_b_q1, tags_b_q3)
         # Promedio: alto score = ambos alinean bien su deseo con lo que ven justo
         balance_escenario = (balance_a + balance_b) / 2
