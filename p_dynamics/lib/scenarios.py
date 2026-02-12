@@ -156,7 +156,7 @@ SCENARIOS = [
     }
 ]
 
-async def get_scenarios(pack_name: str = "cotidiano-v1") -> list[dict]:
+async def get_scenarios(pack_name: str = "cotidiano-v1") -> List[Dict]:
     """
     Devuelve lista de escenarios para el pack indicado desde Supabase.
     
