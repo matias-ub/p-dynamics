@@ -5,10 +5,7 @@ import logging
 
 from .supabase_client import get_supabase_client
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 # DEPRECATED: Hardcoded scenarios kept as fallback only
 # Este data hardcoded será reemplazado por consultas dinámicas a Supabase
 # usando la función get_scenarios_from_db()
