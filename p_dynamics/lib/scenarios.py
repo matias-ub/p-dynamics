@@ -253,8 +253,8 @@ async def get_scenarios(pack_name: str = "cotidiano-v1") -> list[dict]:
         raise
     except Exception as e:
         error_msg = f"Error al cargar escenarios desde Supabase: {str(e)}"
-        logger.error(error_msg)
-        raise Exception(error_msg) from e
+        logger.exception(error_msg)
+        raise
 
 
 # DEPRECATED FUNCTIONS - Mantenidas para compatibilidad temporal
