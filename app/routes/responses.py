@@ -23,7 +23,11 @@ async def submit_response(
     Submit user's answer and partner prediction.
     """
     try:
-        return response_service.submit_response(response_data, current_user.id)
+        return response_service.submit_response(
+            response_data,
+            current_user.id,
+            current_user.access_token
+        )
     except Exception as e:
         error_msg = str(e)
         status_code = 409 if "already answered" in error_msg else 400
@@ -40,7 +44,11 @@ async def get_room_responses(
     User must be a participant in the room.
     """
     try:
-        return response_service.get_room_responses(room_id, current_user.id)
+        return response_service.get_room_responses(
+            room_id,
+            current_user.id,
+            current_user.access_token
+        )
     except Exception as e:
         status_code = 403 if "not a participant" in str(e) else 500
         raise HTTPException(status_code=status_code, detail=str(e))
@@ -55,7 +63,10 @@ async def get_room_streak(
     Get current streak for a room.
     """
     try:
-        return response_service.calculate_streak(room_id)
+        return response_service.calculate_streak(
+            room_id,
+            current_user.access_token
+        )
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -73,7 +84,11 @@ async def check_answer_status(
     Check if both participants have answered today's question.
     """
     try:
-        return response_service.check_both_answered(room_id, daily_question_id)
+        return response_service.check_both_answered(
+            room_id,
+            daily_question_id,
+            current_user.access_token
+        )
     except Exception as e:
         raise HTTPException(
             status_code=500,

@@ -3,6 +3,7 @@ from fastapi import Header, HTTPException
 from typing import Optional
 from .models import User
 from .utils.supabase import get_supabase_client
+from .config import DEBUG
 
 
 async def get_current_user(
@@ -49,11 +50,13 @@ async def get_current_user(
         return User(
             id=user.id,
             email=user.email,
-            is_anonymous=is_anon
+            is_anonymous=is_anon,
+            access_token=token
         )
 
     except Exception as e:
-        print(f"[DEBUG] Token validation failed: {str(e)}")
+        if DEBUG:
+            print(f"[DEBUG] Token validation failed: {str(e)}")
         raise HTTPException(
             status_code=401,
             detail=f"Error al validar token: {str(e)}"

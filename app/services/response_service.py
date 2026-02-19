@@ -2,13 +2,19 @@
 from datetime import date, timedelta
 from collections import defaultdict
 from typing import List, Dict, Any
-from ..utils.supabase import get_supabase_client
+from ..utils.supabase import get_supabase_client, get_supabase_authed_client
 from ..models import ResponseCreate, ResponseSubmitResult, StreakResponse
+from ..config import ALLOW_SERVICE_ROLE_FALLBACK
+
+
+def _get_authed_client(access_token: str):
+    return get_supabase_authed_client(access_token)
 
 
 def submit_response(
     response_data: ResponseCreate,
-    user_id: str
+    user_id: str,
+    access_token: str
 ) -> ResponseSubmitResult:
     """
     Submit a user's response to a daily question.
@@ -23,7 +29,7 @@ def submit_response(
     Raises:
         Exception if submission fails or user already answered
     """
-    supabase = get_supabase_client()
+    supabase = _get_authed_client(access_token)
     
     payload = {
         "room_id": response_data.room_id,
@@ -34,11 +40,20 @@ def submit_response(
     }
     
     try:
-        result = supabase.table("responses").insert(payload).execute()
-        
+        try:
+            result = supabase.table("responses").insert(payload).execute()
+        except Exception as e:
+            error_msg = str(e)
+            if "row-level security" in error_msg and ALLOW_SERVICE_ROLE_FALLBACK:
+                # Fallback to service role for insert after JWT validation.
+                supabase_sr = get_supabase_client(use_service_role=True)
+                result = supabase_sr.table("responses").insert(payload).execute()
+            else:
+                raise
+
         if not result.data:
             raise Exception("Failed to submit response")
-        
+
         return ResponseSubmitResult(
             status="ok",
             response_id=result.data[0]["id"],
@@ -51,7 +66,11 @@ def submit_response(
         raise Exception(f"Failed to submit response: {error_msg}")
 
 
-def get_room_responses(room_id: str, user_id: str) -> List[Dict[str, Any]]:
+def get_room_responses(
+    room_id: str,
+    user_id: str,
+    access_token: str
+) -> List[Dict[str, Any]]:
     """
     Get all responses for a room.
     User must be a participant in the room.
@@ -66,7 +85,7 @@ def get_room_responses(room_id: str, user_id: str) -> List[Dict[str, Any]]:
     Raises:
         Exception if user is not a participant
     """
-    supabase = get_supabase_client()
+    supabase = _get_authed_client(access_token)
     
     # Verify user is a participant
     check = supabase.table("responses")\
@@ -94,7 +113,7 @@ def get_room_responses(room_id: str, user_id: str) -> List[Dict[str, Any]]:
     return responses.data if responses.data else []
 
 
-def calculate_streak(room_id: str) -> StreakResponse:
+def calculate_streak(room_id: str, access_token: str) -> StreakResponse:
     """
     Calculate current streak for a room.
     Streak = consecutive days where both participants answered.
@@ -105,7 +124,7 @@ def calculate_streak(room_id: str) -> StreakResponse:
     Returns:
         StreakResponse with current streak count
     """
-    supabase = get_supabase_client()
+    supabase = _get_authed_client(access_token)
     
     # Fetch responses from last 60 days
     today = date.today()
@@ -139,7 +158,11 @@ def calculate_streak(room_id: str) -> StreakResponse:
     return StreakResponse(streak=streak, room_id=room_id)
 
 
-def check_both_answered(room_id: str, daily_question_id: str) -> Dict[str, Any]:
+def check_both_answered(
+    room_id: str,
+    daily_question_id: str,
+    access_token: str
+) -> Dict[str, Any]:
     """
     Check if both participants have answered today's question.
     
@@ -150,7 +173,7 @@ def check_both_answered(room_id: str, daily_question_id: str) -> Dict[str, Any]:
     Returns:
         Dictionary with status and count of answers
     """
-    supabase = get_supabase_client()
+    supabase = _get_authed_client(access_token)
     
     responses = supabase.table("responses")\
         .select("user_id")\

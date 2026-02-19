@@ -3,9 +3,10 @@ from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
-from ..dependencies import get_optional_user, get_current_user
+from ..dependencies import get_optional_user
 from ..services import room_service, question_service
 from ..models import User
+from ..config import APP_URL
 
 
 router = APIRouter()
@@ -23,7 +24,7 @@ async def index(request: Request, user: User = Depends(get_optional_user)):
     
     return templates.TemplateResponse(
         "index.html",
-        {"request": request, "user": user, "question": question}
+        {"request": request, "user": user, "question": question, "app_url": APP_URL}
     )
 
 
@@ -32,7 +33,7 @@ async def join_room_page(request: Request, token: str = None, error: str = None)
     """Page to join a room with a token."""
     return templates.TemplateResponse(
         "join_room.html",
-        {"request": request, "token": token, "error": error}
+        {"request": request, "token": token, "error": error, "app_url": APP_URL}
     )
 
 
@@ -40,7 +41,7 @@ async def join_room_page(request: Request, token: str = None, error: str = None)
 async def question_page(
     request: Request,
     room_id: str,
-    user: User = Depends(get_current_user)
+    user: User = Depends(get_optional_user)
 ):
     """
     Page to answer today's question.
@@ -58,7 +59,8 @@ async def question_page(
                 "request": request,
                 "user": user,
                 "room": room,
-                "question": question
+                "question": question,
+                "app_url": APP_URL
             }
         )
     except Exception as e:

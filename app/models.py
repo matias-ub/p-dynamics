@@ -10,6 +10,7 @@ class User(BaseModel):
     id: str
     email: Optional[str] = None
     is_anonymous: bool
+    access_token: str
 
 
 # ====================== Room Models ======================

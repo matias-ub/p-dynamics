@@ -101,6 +101,8 @@
 <script>
 const roomId = '{{ room.id }}';
 const roomToken = '{{ room.token if room.token else "" }}';
+const appUrl = '{{ app_url|default("") }}';
+const baseUrl = appUrl || window.location.origin;
 
 document.getElementById('answerForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -158,7 +160,7 @@ document.getElementById('answerForm').addEventListener('submit', async (e) => {
                     // Set token and link
                     document.getElementById('inviteToken').value = roomToken;
                     document.getElementById('inviteLink').value = 
-                        `${window.location.origin}/join-room?token=${roomToken}`;
+                        `${baseUrl}/join-room?token=${roomToken}`;
                 }
             }
         } else {
