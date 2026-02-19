@@ -1,390 +1,444 @@
-# 💑 Parejas - Daily Question Game
+﻿# ðŸ’‘ Parejas - Daily Question Game
 
-A daily question game for couples to connect, understand each other better, and maintain consistency in their relationship through engaging daily prompts.
+Una pregunta diaria para parejas que quieren conectar, entenderse mejor y mantener una rutina de comunicaciÃ³n a travÃ©s de preguntas interesantes.
 
-## 🎯 Concept
+## ðŸŽ¯ Concepto
 
-Every day, both partners answer a simple question and predict what their partner will choose. The app tracks:
-- ✅ Whether predictions match reality (how well you know your partner)
-- 🔥 Streak of consecutive days both have answered
-- 📊 History of all responses
+Cada dÃ­a, ambas personas responden dos preguntas:
+1. **Â¿QuÃ© harÃ­as tÃº?** - Tu respuesta personal
+2. **Â¿QuÃ© harÃ­a tu pareja?** - Predice quÃ© elegirÃ­a tu pareja
 
-## ✨ Features
+La app rastrea:
+- âœ… Si las predicciones coinciden (quÃ© tan bien conoces a tu pareja)
+- ðŸ”¥ Racha de dÃ­as consecutivos donde ambos respondieron
+- ðŸ’‘ ConexiÃ³n a travÃ©s de respuestas compartidas
 
-- 🎲 **Daily Questions**: One new question per day with multiple-choice answers
-- 🤝 **Room System**: Create a private room and share a code with your partner
-- 👤 **Anonymous Auth**: No registration required - just create and join
-- 📈 **Streak Tracking**: Maintain your couple's daily answering streak
-- 🎨 **Beautiful UI**: Responsive design with Bootstrap 5 and gradient themes
-- ⚡ **HTMX Integration**: Smooth interactions without page reloads
+## âœ¨ Flujo Simplificado
 
-## 🏗️ Architecture
+### Usuario 1 (Crea)
+1. Entra a la pÃ¡gina principal â†’ Ve la pregunta del dÃ­a
+2. Click en "Responder" â†’ Se crea automÃ¡ticamente:
+   - Usuario anÃ³nimo
+   - Room privado
+3. Responde ambas preguntas
+4. Recibe cÃ³digo para compartir con su pareja
+
+### Usuario 2 (Se Une)
+1. Recibe cÃ³digo/enlace
+2. Entra con el cÃ³digo
+3. Se crea usuario anÃ³nimo automÃ¡ticamente
+4. Responde ambas preguntas
+
+**Sin registro, sin complicaciones, sin pasos extras.**
+
+## âœ¨ CaracterÃ­sticas
+
+- ðŸŽ² **Pregunta Diaria**: Una nueva pregunta cada dÃ­a con opciones mÃºltiples
+- âš¡ **Auto-CreaciÃ³n**: Room y usuario se crean automÃ¡ticamente al responder
+- ðŸ‘¤ **100% AnÃ³nimo**: Sin email, sin password, sin datos personales
+- ðŸ”„ **Auto-Refresh de SesiÃ³n**: Supabase JS maneja tokens automÃ¡ticamente (nunca expiran)
+- ðŸ“ˆ **Racha AutomÃ¡tica**: Tracking de dÃ­as consecutivos
+- ðŸŽ¨ **UI Minimalista**: Flujo directo sin distracciones
+- ðŸ”— **Compartir FÃ¡cil**: CÃ³digo o enlace directo para invitar
+
+## ðŸ—ï¸ Arquitectura
 
 ### Tech Stack
-- **Backend**: FastAPI (Python)
-- **Database**: Supabase (Postgres + Auth)
-- **Frontend**: Jinja2 Templates + Bootstrap 5 + HTMX
-- **Auth**: Supabase Anonymous Authentication
+- **Backend**: FastAPI (Python) - API REST + SSR
+- **Database**: Supabase (Postgres + Auth + RLS)
+- **Frontend**: Jinja2 Templates + Bootstrap 5
+- **Auth Client**: Supabase JS (auto-refresh, session management)
+- **No estatal**: Sessions manejadas por Supabase (localStorage + cookies)
 
 ### Project Structure
 ```
 p-dynamics/
-├── app/
-│   ├── main.py              # FastAPI app initialization
-│   ├── config.py            # Environment configuration
-│   ├── dependencies.py      # Auth dependencies
-│   ├── models.py            # Pydantic models
-│   │
-│   ├── routes/              # Route handlers
-│   │   ├── pages.py         # SSR page routes
-│   │   ├── auth.py          # Auth API endpoints
-│   │   ├── rooms.py         # Room management
-│   │   ├── questions.py     # Daily questions
-│   │   └── responses.py     # User responses
-│   │
-│   ├── services/            # Business logic layer
-│   │   ├── auth_service.py
-│   │   ├── room_service.py
-│   │   ├── question_service.py
-│   │   └── response_service.py
-│   │
-│   ├── utils/               # Utilities
-│   │   └── supabase.py      # Supabase client
-│   │
-│   ├── templates/           # Jinja2 HTML templates
-│   │   ├── base.html
-│   │   ├── index.html
-│   │   ├── create_room.html
-│   │   ├── join_room.html
-│   │   ├── dashboard.html
-│   │   ├── question.html
-│   │   └── results.html
-│   │
-│   └── static/              # Static assets
-│       └── css/
-│           └── style.css
-│
-├── supabase/
-│   └── migrations/
-│       ├── 001_initial_schema.sql
-│       └── 002_seed_data.sql
-│
-├── requirements.txt
-├── .env.example
-└── README.md
+â”œâ”€â”€ app/
+â”‚   â”œâ”€â”€ main.py              # FastAPI app + endpoint /api/start-session
+â”‚   â”œâ”€â”€ config.py            # Environment configuration
+â”‚   â”œâ”€â”€ dependencies.py      # Auth dependencies (JWT validation)
+â”‚   â”œâ”€â”€ models.py            # Pydantic models
+â”‚   â”‚
+â”‚   â”œâ”€â”€ routes/              # Route handlers
+â”‚   â”‚   â”œâ”€â”€ pages.py         # SSR: /, /join-room, /question/{id}
+â”‚   â”‚   â”œâ”€â”€ auth.py          # API: /refresh (no usado ahora)
+â”‚   â”‚   â”œâ”€â”€ rooms.py         # API: POST/GET rooms
+â”‚   â”‚   â”œâ”€â”€ questions.py     # API: GET today's question
+â”‚   â”‚   â””â”€â”€ responses.py     # API: POST/GET responses, streaks
+â”‚   â”‚
+â”‚   â”œâ”€â”€ services/            # Business logic
+â”‚   â”‚   â”œâ”€â”€ room_service.py  # Create rooms, get by token/id
+â”‚   â”‚   â”œâ”€â”€ question_service.py  # Get daily questions
+â”‚   â”‚   â””â”€â”€ response_service.py  # Submit, calculate streaks
+â”‚   â”‚
+â”‚   â”œâ”€â”€ utils/
+â”‚   â”‚   â””â”€â”€ supabase.py      # Supabase backend client
+â”‚   â”‚
+â”‚   â”œâ”€â”€ templates/           # Jinja2 templates (SOLO 3 PÃGINAS)
+â”‚   â”‚   â”œâ”€â”€ base.html        # Template base + Supabase JS init
+â”‚   â”‚   â”œâ”€â”€ index.html       # Landing con pregunta del dÃ­a
+â”‚   â”‚   â”œâ”€â”€ join_room.html   # Unirse con cÃ³digo
+â”‚   â”‚   â””â”€â”€ question.html    # Formulario de respuesta + invitar
+â”‚   â”‚
+â”‚   â””â”€â”€ static/
+â”‚       â””â”€â”€ css/
+â”‚           â””â”€â”€ style.css    # Estilos personalizados
+â”‚
+â”œâ”€â”€ supabase/
+â”‚   â””â”€â”€ migrations/
+â”‚       â”œâ”€â”€ 001_initial_schema.sql  # Schema completo
+â”‚       â””â”€â”€ 002_seed_data.sql       # Preguntas de ejemplo
+â”‚
+â”œâ”€â”€ requirements.txt
+â”œâ”€â”€ .env
+â””â”€â”€ README.md
 ```
 
-## 🚀 Getting Started
+### Frontend Auth Flow (Supabase JS)
+```javascript
+// En base.html - InicializaciÃ³n global
+window.appSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+// FunciÃ³n helper - crea anÃ³nimo si no hay sesiÃ³n
+async function ensureSession() {
+  const { data: { session } } = await appSupabase.auth.getSession()
+  if (!session) {
+    const { data } = await appSupabase.auth.signInAnonymously()
+    return data.session
+  }
+  return session
+}
+
+// En cualquier pÃ¡gina
+const session = await ensureSession()
+const token = session.access_token
+// Supabase auto-refresca el token antes de que expire
+```
+
+## ðŸ—„ï¸ Database Schema
+
+### Tablas Principales
+- **auth.users** - Usuarios de Supabase (anÃ³nimos)
+- **profiles** - Perfiles extendidos (auto-creados via trigger)
+- **questions** - Pool de preguntas (intensity_level 1-5)
+- **options** - Opciones de respuesta por pregunta (position)
+- **daily_questions** - Maps question_id â†’ date (una por dÃ­a)
+- **rooms** - Rooms privados (token Ãºnico, max_participants=2)
+- **responses** - Respuestas: self_option_id + partner_prediction_option_id
+
+### Row Level Security (RLS)
+```sql
+-- Usuarios pueden ver/editar solo su perfil
+CREATE POLICY "Users can read own profile" ON profiles
+  FOR SELECT USING (auth.uid() = id);
+
+-- Solo los participantes del room ven sus respuestas
+CREATE POLICY "Room participants can read responses" ON responses
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM responses r2 
+      WHERE r2.room_id = responses.room_id 
+        AND r2.user_id = auth.uid()
+    )
+  );
+
+-- Usuarios solo insertan sus propias respuestas
+CREATE POLICY "Users insert own response" ON responses
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+```
+
+### Constraints Importantes
+```sql
+-- Un usuario responde solo 1 vez por dÃ­a por room
+CREATE UNIQUE INDEX uniq_response_per_user_day 
+  ON responses(room_id, daily_question_id, user_id);
+
+-- Parejas siempre tienen max 2 participantes
+ALTER TABLE rooms ADD CONSTRAINT chk_couple_max_participants 
+  CHECK (room_type != 'couple' OR max_participants = 2);
+```
+
+## ðŸš€ Quick Start
 
 ### Prerequisites
 - Python 3.8+
-- Supabase account (free tier works)
-- Git
+- Supabase account (free tier)
 
 ### Installation
 
-1. **Clone the repository**
+1. **Clone y setup**
 ```bash
 git clone https://github.com/matias-ub/p-dynamics.git
 cd p-dynamics
-```
-
-2. **Create virtual environment**
-```bash
 python -m venv venv
-
-# Windows
-venv\Scripts\activate
-
-# macOS/Linux
-source venv/bin/activate
-```
-
-3. **Install dependencies**
-```bash
+venv\Scripts\activate  # Windows
+# source venv/bin/activate  # macOS/Linux
 pip install -r requirements.txt
 ```
 
-4. **Configure environment variables**
+2. **Configurar Supabase**
 
-Create a `.env` file in the root directory:
+Crea un proyecto en [supabase.com](https://supabase.com) y:
+
+a) **Ejecuta las migraciones** (SQL Editor):
+   - `supabase/migrations/001_initial_schema.sql`
+   - `supabase/migrations/002_seed_data.sql`
+
+b) **Habilita Anonymous Auth**:
+   - Settings â†’ Authentication â†’ Enable Anonymous Sign-ins
+
+c) **ObtÃ©n las credenciales**:
+   - Settings â†’ API â†’ Project URL y anon/public key
+
+3. **Crear `.env`**
 ```env
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-DEBUG=false
+SUPABASE_URL=https://tu-proyecto.supabase.co
+SUPABASE_ANON_KEY=eyJhbG...  # La puedes exponer en frontend
+SUPABASE_SERVICE_ROLE_KEY=eyJhbG...  # Secreta, solo backend
 ```
 
-5. **Set up Supabase**
-
-- Create a new Supabase project
-- Run the migrations in order:
-  1. Execute `supabase/migrations/001_initial_schema.sql` in SQL Editor
-  2. Execute `supabase/migrations/002_seed_data.sql` in SQL Editor
-- Enable anonymous auth in Authentication settings
-
-6. **Run the application**
+4. **Ejecutar**
 ```bash
 uvicorn app.main:app --reload
 ```
 
-The app will be available at `http://localhost:8000`
+Abre `http://localhost:8000` ðŸŽ‰
 
-## 📖 How to Use
+## ðŸ“– CÃ³mo Funciona
 
-### For the First Partner (Room Creator)
-1. Go to the home page
-2. Click "Crear Room"
-3. Share the generated code with your partner
-
-### For the Second Partner (Joining)
-1. Go to the home page
-2. Click "Unirse con Código"
-3. Enter the code shared by your partner
-4. You're in!
-
-### Daily Flow
-1. Visit your room's dashboard
-2. Click "Responder Ahora" when today's question is available
-3. Answer what YOU would choose
-4. Predict what YOUR PARTNER will choose
-5. Check back later to see if your predictions matched!
-
-## 🗄️ Database Schema
-
-### Tables
-- **profiles**: User profiles (auto-created from auth.users)
-- **questions**: Pool of questions with intensity levels
-- **options**: Multiple-choice options for each question
-- **daily_questions**: Maps questions to specific dates
-- **rooms**: Private rooms for couples (with unique tokens)
-- **responses**: User answers and partner predictions
-
-### Key Features
-- **Row Level Security (RLS)**: Enforces data privacy
-- **Anonymous Auth**: Users don't need email/password
-- **Streak Calculation**: On-the-fly calculation from responses
-- **Unique Constraints**: One response per user per day per room
-
-## 🔐 Authentication Flow
-
-1. User creates or joins a room
-2. Anonymous Supabase user is created automatically
-3. JWT token is stored in cookie
-4. All API calls include token for RLS enforcement
-5. Users can optionally convert to permanent accounts (future feature)
-
-## 🌟 API Endpoints
-
-### Pages (SSR)
-- `GET /` - Landing page
-- `GET /create-room` - Create room page
-- `GET /join-room` - Join room page
-- `GET /dashboard/{room_id}` - Room dashboard
-- `GET /question/{room_id}` - Answer today's question
-- `GET /results/{room_id}` - View results and history
-
-### API (JSON)
-- `POST /api/auth/anonymous` - Create anonymous user
-- `POST /api/rooms` - Create new room
-- `GET /api/rooms/{token}` - Get room by token
-- `GET /api/questions/today` - Get today's daily question
-- `POST /api/responses` - Submit answer
-- `GET /api/responses/room/{room_id}` - Get room responses
-- `GET /api/responses/room/{room_id}/streak` - Get streak
-
-## 🎨 Customization
-
-### Adding New Questions
-Edit `supabase/migrations/002_seed_data.sql` and add:
-```sql
-WITH q AS (
-  INSERT INTO public.questions (text, intensity_level) 
-  VALUES ('Your question here?', 3)
-  RETURNING id
-)
-INSERT INTO public.daily_questions (question_id, date)
-SELECT id, 'YYYY-MM-DD' FROM q;
-
-INSERT INTO public.options (question_id, text, position)
-SELECT q.id, opt.text, opt.pos
-FROM public.questions q, (VALUES 
-  (1, 'Option 1'),
-  (2, 'Option 2'),
-  (3, 'Option 3')
-) AS opt(pos, text)
-WHERE q.text = 'Your question here?';
+### 1. Usuario inicia respuesta
+```
+GET / 
+â†’ Ve pregunta del dÃ­a
+â†’ Click "Responder"
+â†’ JS: ensureSession() crea usuario anÃ³nimo
+â†’ POST /api/rooms crea room
+â†’ Redirect a /question/{room_id}
 ```
 
-### Styling
-Edit `app/static/css/style.css` to customize colors, gradients, and animations.
-
-## 🚢 Deployment
-
-### Railway
-```bash
-# Install Railway CLI
-npm i -g @railway/cli
-
-# Login and deploy
-railway login
-railway init
-railway up
+### 2. Usuario responde
+```
+GET /question/{room_id}
+â†’ Muestra formulario con opciones
+â†’ Usuario elige "QuÃ© harÃ­a yo" y "QuÃ© harÃ­a mi pareja"
+â†’ POST /api/responses con {self_option_id, partner_prediction_option_id}
+â†’ Guarda en DB con user_id del JWT
 ```
 
-### Fly.io
-```bash
-# Install Fly CLI
-curl -L https://fly.io/install.sh | sh
-
-# Deploy
-fly launch
-fly deploy
+### 3. Usuario invita
+```
+Si es el primer participante del room:
+â†’ Muestra botÃ³n "Invitar"
+â†’ CÃ³digo: ABCD1234EFGH5678
+â†’ Link: /join-room?token=ABCD...
 ```
 
-### Environment Variables
-Remember to set these in your deployment platform:
-- `SUPABASE_URL`
-- `SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
-
-## 🛣️ Roadmap
-
-- [ ] Email/password authentication option
-- [ ] Convert anonymous users to permanent accounts
-- [ ] Share results on social media
-- [ ] Weekly/monthly reports
-- [ ] Custom question packs
-- [ ] Couple statistics and insights
-- [ ] Multi-language support
-- [ ] Mobile app (React Native)
-
-## 📝 License
-
-This project is licensed under the MIT License.
-
-## 👥 Contributing
-
-Contributions are welcome! Please:
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📧 Contact
-
-**Matias** - [@matias-ub](https://github.com/matias-ub)
-
-Project Link: [https://github.com/matias-ub/p-dynamics](https://github.com/matias-ub/p-dynamics)
-
----
-
-Made with ❤️ for couples who want to connect better
+### 4. Pareja se une
+```
+GET /join-room?token=ABCD...
+â†’ Verifica room existe: GET /api/rooms/{token}
+â†’ ensureSession() crea usuario anÃ³nimo 2
+â†’ Redirect a /question/{room_id}
+â†’ Responde las mismas preguntas
 ```
 
-2. Abre tu navegador en `http://localhost:8000`
+### 5. Ver si coincidieron
+```
+Cuando ambos respondieron:
+â†’ Compara self_option_id del usuario 1 con partner_prediction_option_id del usuario 2
+â†’ Compara self_option_id del usuario 2 con partner_prediction_option_id del usuario 1
+â†’ Â¿Acertaron? âœ… o âŒ
+```
 
-3. Accede a la documentación interactiva en `http://localhost:8000/docs`
+## ðŸŒŸ API Endpoints
 
-4. Crea una cuenta o inicia sesión
+### PÃ¡ginas (Server-Side Rendered)
+| Ruta | DescripciÃ³n |
+|------|-------------|
+| `GET /` | Landing page con pregunta del dÃ­a |
+| `GET /join-room?token=XXX` | Unirse a un room existente |
+| `GET /question/{room_id}` | Formulario para responder (requiere auth) |
 
-5. Completa el test
+### API REST (JSON)
+| MÃ©todo | Ruta | DescripciÃ³n | Auth |
+|--------|------|-------------|------|
+| `POST` | `/api/rooms` | Crear nuevo room | SÃ­ |
+| `GET` | `/api/rooms/{token}` | Obtener room por token | No |
+| `GET` | `/api/rooms/id/{room_id}` | Obtener room por ID | SÃ­ |
+| `GET` | `/api/questions/today` | Pregunta del dÃ­a | No |
+| `POST` | `/api/responses` | Enviar respuesta | SÃ­ |
+| `GET` | `/api/responses/room/{room_id}` | Todas las respuestas del room | SÃ­ |
+| `GET` | `/api/responses/room/{room_id}/streak` | Racha actual | SÃ­ |
+| `GET` | `/api/responses/room/{room_id}/status/{question_id}` | Â¿Ambos respondieron? | SÃ­ |
 
-6. Visualiza tus resultados
+### Modelos Request/Response
 
-## Desarrollo
-
-### Agregar nuevos escenarios
-
-Edita el archivo `p_dynamics/lib/scenarios.py` y agrega nuevos escenarios siguiendo la estructura existente:
-
-```python
+**POST /api/responses**
+```json
 {
-    "id": 4,
-    "title": "Nuevo Escenario",
-    "description": "Descripción del escenario",
-    "questions": [
-        {
-            "id": "q4_1",
-            "text": "¿Pregunta del escenario?",
-            "options": [
-                {
-                    "text": "Opción 1",
-                    "tags": {"dimension1": 8, "dimension2": 5}
-                },
-                # ... más opciones
-            ]
-        }
-        # 4 preguntas por escenario
-    ]
+  "room_id": "uuid",
+  "daily_question_id": "uuid",
+  "self_option_id": "uuid",
+  "partner_prediction_option_id": "uuid"
 }
 ```
 
-### Modificar templates
-
-Los templates Jinja2 están en `app/templates/`. Cada template extiende de `base.html`.
-
-### Agregar nuevas rutas
-
-Crea nuevos archivos en `app/routes/` y regístralos en `app/main.py`:
-
-```python
-from .routes import nueva_ruta
-
-app.include_router(nueva_ruta.router, prefix="/ruta", tags=["tag"])
+**GET /api/questions/today**
+```json
+{
+  "id": "uuid",
+  "text": "Â¿PreferirÃ­as...?",
+  "intensity_level": 3,
+  "options": [
+    {"id": "uuid", "text": "OpciÃ³n A", "position": 1},
+    {"id": "uuid", "text": "OpciÃ³n B", "position": 2}
+  ]
+}
 ```
 
-### Configuración de Supabase
+## ðŸŽ¨ Agregar Preguntas
 
-El schema de la base de datos está en `supabase/migrations/001_initial_schema.sql`. Puedes ejecutarlo directamente en el SQL Editor de Supabase.
+Edita `supabase/migrations/002_seed_data.sql`:
 
-**Nota:** Para el MVP actual, las sesiones de test se almacenan en memoria. Para producción, se recomienda usar Redis o guardar en base de datos.
+```sql
+-- 1. Insertar pregunta
+WITH q AS (
+  INSERT INTO questions (text, intensity_level) 
+  VALUES ('Â¿PreferirÃ­as vivir en la playa o en la montaÃ±a?', 2)
+  RETURNING id
+)
+-- 2. Asignarla a una fecha
+INSERT INTO daily_questions (question_id, date)
+SELECT id, '2026-02-20' FROM q;
 
-**Tablas principales:**
-- `profiles` - Extensión de auth.users con datos del perfil
-- `couples` - Relación de parejas con invite_code
-- `scenario_packs` - Paquetes de escenarios versionados
-- `scenarios` - Escenarios individuales
-- `scenario_options` - Opciones de respuesta por escenario
-- `tests` - Instancias de tests realizados
-- `responses` - Respuestas de usuarios (4 perspectivas por escenario)
+-- 3. Agregar opciones
+INSERT INTO options (question_id, text, position)
+SELECT q.id, opt.text, opt.pos
+FROM questions q, (VALUES 
+  (1, 'ðŸ–ï¸ Playa - sol, mar y arena'),
+  (2, 'â›°ï¸ MontaÃ±a - paz, naturaleza y aire puro'),
+  (3, 'ðŸ™ï¸ Ciudad - prefiero la vida urbana')
+) AS opt(pos, text)
+WHERE q.text = 'Â¿PreferirÃ­as vivir en la playa o en la montaÃ±a?';
+```
 
-## Tecnologías
+**Intensity levels:**
+- 1: Ligera (comida favorita, pelÃ­culas)
+- 2: Casual (preferencias de estilo de vida)
+- 3: Moderada (valores, prioridades)
+- 4: Profunda (miedos, sueÃ±os)
+- 5: Ãntima (vulnerabilidad, futuro juntos)
 
-- [FastAPI](https://fastapi.tiangolo.com/) - Framework web moderno y rápido
-- [Jinja2](https://jinja.palletsprojects.com/) - Motor de templates
-- [HTMX](https://htmx.org/) - Interactividad HTML moderna
-- [Bootstrap 5](https://getbootstrap.com/) - Framework CSS
-- [Supabase](https://supabase.com/) - Backend as a Service
-- [Plotly](https://plotly.com/) - Visualización de datos (futuro)
-- Python 3.8+
+## ðŸš¢ Deployment
 
-## Próximos Pasos
+### Railway
+```bash
+# Conecta tu repo GitHub
+# Railway detecta FastAPI automÃ¡ticamente
+# Variables de entorno en Settings:
+SUPABASE_URL=...
+SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
+```
 
-- [ ] Persistencia de sesiones en Redis/Base de datos
-- [ ] Sistema de parejas funcional (invitaciones)
-- [ ] Comparación de resultados entre parejas
-- [ ] Gráficos radar con Plotly
-- [ ] Verificación de email
-- [ ] Despliegue a producción
+### Render
+```bash
+# Build Command
+pip install -r requirements.txt
+# Start Command
+uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
 
-## Contribuir
+### Fly.io
+```toml
+# fly.toml
+app = "p-dynamics"
 
-Las contribuciones son bienvenidas. Por favor:
+[env]
+  PORT = "8000"
 
-1. Haz fork del proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+[[services]]
+  http_checks = []
+  internal_port = 8000
+  protocol = "tcp"
+```
 
-## Licencia
+## ðŸ›£ï¸ Roadmap
 
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
+### MVP Actual âœ…
+- [x] Flujo simplificado (1 click para responder)
+- [x] Auto-creaciÃ³n de usuario y room
+- [x] Supabase JS con auto-refresh
+- [x] Sistema de invitaciÃ³n con cÃ³digo
+- [x] RLS completo para privacidad
 
-## Contacto
+### PrÃ³ximos Pasos
+- [ ] PÃ¡gina de resultados/comparaciÃ³n
+- [ ] Dashboard con histÃ³rico de respuestas
+- [ ] Ver racha actual en UI
+- [ ] Notificaciones cuando ambos respondieron
+- [ ] Convertir usuario anÃ³nimo a permanente (email/password)
+- [ ] PWA (installable en mÃ³vil)
+- [ ] Temas de color personalizados
+- [ ] Packs de preguntas temÃ¡ticas
 
-Matias - [@matias-ub](https://github.com/matias-ub)
+### Futuro
+- [ ] Grupos (mÃ¡s de 2 personas)
+- [ ] EstadÃ­sticas y grÃ¡ficos
+- [ ] Compartir en redes sociales
+- [ ] API pÃºblica para integrar en otras apps
+- [ ] Multi-idioma
+
+## ðŸ”§ Troubleshooting
+
+### Error: "Token validation failed: token is expired"
+**SoluciÃ³n:** Ya no deberÃ­a pasar con Supabase JS, que auto-refresca. Si pasa:
+- Verifica que Supabase JS estÃ¡ cargado: `console.log(window.appSupabase)`
+- Borra cookies: DevTools â†’ Application â†’ Cookies â†’ Clear All
+
+### Error: "Room capacity exceeded"
+**Causa:** El room ya tiene 2 participantes.
+**SoluciÃ³n:** Crear un nuevo room (cada pareja necesita su propio room).
+
+### No aparece la pregunta del dÃ­a
+**Causa:** No hay pregunta asignada para la fecha actual.
+**SoluciÃ³n:** Ejecuta en SQL Editor:
+```sql
+-- Ver quÃ© fechas tienen preguntas
+SELECT * FROM daily_questions ORDER BY date DESC;
+
+-- Asignar pregunta a hoy
+INSERT INTO daily_questions (question_id, date)
+SELECT id, CURRENT_DATE FROM questions LIMIT 1;
+```
+
+### Anonymous auth no funciona
+**SoluciÃ³n:** 
+1. Supabase Dashboard â†’ Authentication â†’ Providers
+2. Encuentra "Anonymous Sign-ins"
+3. Toggle ON
+4. Save
+
+## ðŸ“ License
+
+MIT License - Ver [LICENSE](LICENSE)
+
+## ðŸ‘¥ Contributing
+
+Pull requests son bienvenidos. Para cambios grandes, abre un issue primero.
+
+1. Fork
+2. Crea tu rama (`git checkout -b feature/CosaIncreible`)
+3. Commit (`git commit -m 'Add: cosa increÃ­ble'`)
+4. Push (`git push origin feature/CosaIncreible`)
+5. Pull Request
+
+## ðŸ“§ Contact
+
+**Matias** - [@matias-ub](https://github.com/matias-ub)
 
 Proyecto: [https://github.com/matias-ub/p-dynamics](https://github.com/matias-ub/p-dynamics)
+
+---
+
+ðŸ’‘ Hecho con amor para parejas que quieren conectar mejor
