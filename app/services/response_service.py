@@ -113,6 +113,44 @@ def get_room_responses(
     return responses.data if responses.data else []
 
 
+def get_daily_question_responses(
+    room_id: str,
+    daily_question_id: str,
+    user_id: str,
+    access_token: str
+) -> List[Dict[str, Any]]:
+    """
+    Get responses for a room and daily question.
+    User must be a participant in the room.
+    """
+    supabase = _get_authed_client(access_token)
+
+    # Verify user is a participant
+    check = supabase.table("responses")\
+        .select("id")\
+        .eq("room_id", room_id)\
+        .eq("user_id", user_id)\
+        .limit(1)\
+        .execute()
+
+    if not check.data:
+        raise Exception("You are not a participant in this room")
+
+    responses = supabase.table("responses")\
+        .select("""
+            *,
+            self_option:options!self_option_id(text),
+            prediction_option:options!partner_prediction_option_id(text),
+            profile:profiles!user_id(name)
+        """)\
+        .eq("room_id", room_id)\
+        .eq("daily_question_id", daily_question_id)\
+        .order("created_at", desc=False)\
+        .execute()
+
+    return responses.data if responses.data else []
+
+
 def calculate_streak(room_id: str, access_token: str) -> StreakResponse:
     """
     Calculate current streak for a room.

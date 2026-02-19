@@ -54,6 +54,28 @@ async def get_room_responses(
         raise HTTPException(status_code=status_code, detail=str(e))
 
 
+@router.get("/room/{room_id}/daily/{daily_question_id}")
+async def get_daily_question_responses(
+    room_id: str,
+    daily_question_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get responses for a room and daily question.
+    User must be a participant in the room.
+    """
+    try:
+        return response_service.get_daily_question_responses(
+            room_id,
+            daily_question_id,
+            current_user.id,
+            current_user.access_token
+        )
+    except Exception as e:
+        status_code = 403 if "not a participant" in str(e) else 500
+        raise HTTPException(status_code=status_code, detail=str(e))
+
+
 @router.get("/room/{room_id}/streak", response_model=StreakResponse)
 async def get_room_streak(
     room_id: str,

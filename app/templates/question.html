@@ -67,6 +67,14 @@
                     <h3 class="text-success">✓ ¡Respuestas enviadas!</h3>
                     <p class="text-muted">Tus respuestas han sido guardadas</p>
                 </div>
+
+                <div id="resultsSection" class="d-none text-start mb-4">
+                    <div id="waitingAlert" class="alert alert-info d-none">
+                        Estado: esperando la respuesta de tu pareja.
+                    </div>
+                    <div id="responsesContainer"></div>
+                    <div id="summaryContainer" class="alert alert-success d-none"></div>
+                </div>
                 
                 <div id="inviteSection" class="d-none">
                     <div class="alert alert-info mb-4">
@@ -103,6 +111,7 @@ const roomId = '{{ room.id }}';
 const roomToken = '{{ room.token if room.token else "" }}';
 const appUrl = '{{ app_url|default("") }}';
 const baseUrl = appUrl || window.location.origin;
+const dailyQuestionId = '{{ question.id }}';
 
 document.getElementById('answerForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -161,7 +170,11 @@ document.getElementById('answerForm').addEventListener('submit', async (e) => {
                     document.getElementById('inviteToken').value = roomToken;
                     document.getElementById('inviteLink').value = 
                         `${baseUrl}/join-room?token=${roomToken}`;
+                } else {
+                    document.getElementById('inviteSection').classList.add('d-none');
                 }
+
+                await loadResults(accessToken);
             }
         } else {
             const error = await response.json();
@@ -184,6 +197,82 @@ function copyLink() {
     linkInput.select();
     document.execCommand('copy');
     alert('Enlace copiado al portapapeles');
+}
+
+function escapeHtml(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+async function loadResults(accessToken) {
+    const resultsSection = document.getElementById('resultsSection');
+    const responsesContainer = document.getElementById('responsesContainer');
+    const waitingAlert = document.getElementById('waitingAlert');
+    const summaryContainer = document.getElementById('summaryContainer');
+
+    resultsSection.classList.remove('d-none');
+    responsesContainer.innerHTML = '';
+    waitingAlert.classList.add('d-none');
+    summaryContainer.classList.add('d-none');
+
+    const responsesResponse = await fetch(
+        `/api/responses/room/${roomId}/daily/${dailyQuestionId}`,
+        {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
+        }
+    );
+
+    if (!responsesResponse.ok) {
+        return;
+    }
+
+    const responses = await responsesResponse.json();
+
+    if (!responses || responses.length === 0) {
+        return;
+    }
+
+    const responseCards = responses.map((resp, index) => {
+        const name = resp.profile && resp.profile.name ? resp.profile.name : `Participante ${index + 1}`;
+        const selfText = resp.self_option && resp.self_option.text ? resp.self_option.text : '---';
+        const predText = resp.prediction_option && resp.prediction_option.text ? resp.prediction_option.text : '---';
+
+        return `
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-body">
+                    <div class="fw-bold mb-2">${escapeHtml(name)}</div>
+                    <div class="mb-1"><span class="text-muted">Su respuesta:</span> ${escapeHtml(selfText)}</div>
+                    <div><span class="text-muted">Su predicción:</span> ${escapeHtml(predText)}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    responsesContainer.innerHTML = responseCards;
+
+    if (responses.length < 2) {
+        waitingAlert.classList.remove('d-none');
+        return;
+    }
+
+    const [first, second] = responses;
+    const firstCorrect = first.partner_prediction_option_id === second.self_option_id;
+    const secondCorrect = second.partner_prediction_option_id === first.self_option_id;
+    const mutualCount = (firstCorrect ? 1 : 0) + (secondCorrect ? 1 : 0);
+    const sharedChoice = first.self_option_id === second.self_option_id;
+
+    summaryContainer.innerHTML = `
+        <div class="fw-bold mb-2">Resultados</div>
+        <div>🧠 Lectura mutua: ${mutualCount}/2</div>
+        <div>🎯 Elección compartida: ${sharedChoice ? 'Sí' : 'No'}</div>
+    `;
+    summaryContainer.classList.remove('d-none');
 }
 </script>
 {% endblock %}
