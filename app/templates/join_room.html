@@ -59,15 +59,7 @@ document.getElementById('joinForm').addEventListener('submit', async (e) => {
         }
         const roomData = await roomResp.json();
         
-        // Step 2: Ensure user has a session (creates anonymous if needed)
-        const session = await ensureSession();
-        
-        if (!session) {
-            alert('Error al crear sesión. Por favor intenta de nuevo.');
-            return;
-        }
-        
-        // Step 3: Redirect to question page
+        // Step 2: Redirect to question page
         window.location.href = `/question/${roomData.id}`;
     } catch (error) {
         alert('Error al unirse al room: ' + error.message);

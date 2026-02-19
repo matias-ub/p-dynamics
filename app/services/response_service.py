@@ -103,8 +103,7 @@ def get_room_responses(
         .select("""
             *,
             self_option:options!self_option_id(text),
-            prediction_option:options!partner_prediction_option_id(text),
-            profile:profiles!user_id(name)
+            prediction_option:options!partner_prediction_option_id(text)
         """)\
         .eq("room_id", room_id)\
         .order("created_at", desc=True)\
@@ -140,8 +139,7 @@ def get_daily_question_responses(
         .select("""
             *,
             self_option:options!self_option_id(text),
-            prediction_option:options!partner_prediction_option_id(text),
-            profile:profiles!user_id(name)
+            prediction_option:options!partner_prediction_option_id(text)
         """)\
         .eq("room_id", room_id)\
         .eq("daily_question_id", daily_question_id)\
@@ -199,6 +197,7 @@ def calculate_streak(room_id: str, access_token: str) -> StreakResponse:
 def check_both_answered(
     room_id: str,
     daily_question_id: str,
+    user_id: str,
     access_token: str
 ) -> Dict[str, Any]:
     """
@@ -220,9 +219,13 @@ def check_both_answered(
         .execute()
     
     count = len(responses.data) if responses.data else 0
+    user_answered = False
+    if responses.data:
+        user_answered = any(r["user_id"] == user_id for r in responses.data)
     
     return {
         "both_answered": count >= 2,
+        "user_answered": user_answered,
         "answer_count": count,
         "room_id": room_id,
         "daily_question_id": daily_question_id

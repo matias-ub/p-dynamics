@@ -77,22 +77,11 @@ document.getElementById('startAnswering')?.addEventListener('click', async () =>
     button.textContent = 'Preparando...';
     
     try {
-        // Ensure user has a session (creates anonymous if needed)
-        const session = await ensureSession();
-        
-        if (!session) {
-            alert('Error al crear sesión. Por favor intenta de nuevo.');
-            button.disabled = false;
-            button.textContent = 'Responder';
-            return;
-        }
-        
-        // Create room with authenticated session
+        // Create room (session is managed by backend cookies)
         const roomResponse = await fetch('/api/rooms', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.access_token}`
+                'Content-Type': 'application/json'
             }
         });
         

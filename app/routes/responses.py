@@ -109,6 +109,7 @@ async def check_answer_status(
         return response_service.check_both_answered(
             room_id,
             daily_question_id,
+            current_user.id,
             current_user.access_token
         )
     except Exception as e:
