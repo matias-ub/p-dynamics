@@ -1,5 +1,5 @@
 """FastAPI dependencies."""
-from fastapi import Header, HTTPException, Cookie
+from fastapi import Header, HTTPException
 from typing import Optional
 from .models import User
 from .utils.supabase import get_supabase_client
@@ -7,64 +7,62 @@ from .utils.supabase import get_supabase_client
 
 async def get_current_user(
     authorization: Optional[str] = Header(None),
-    access_token: Optional[str] = Cookie(None)
+    access_token: Optional[str] = Header(None, alias="X-Access-Token")
 ) -> User:
-    """
-    Get current authenticated user from JWT token.
-    Supports both Authorization header and cookie-based auth.
-    """
     token = None
-    
-    # Try Authorization header first
+
+    # Prioritize Authorization header (standard)
     if authorization and authorization.startswith("Bearer "):
         token = authorization.split(" ")[1]
-    # Fallback to cookie
+    # Fallback for HTMX or custom header
     elif access_token:
         token = access_token
-    
+
     if not token:
         raise HTTPException(
             status_code=401,
-            detail="Authentication required. Please provide a valid token."
+            detail="Se requiere token (Bearer o X-Access-Token)"
         )
-    
+
     try:
         supabase = get_supabase_client()
-        
-        # Verify JWT and get user
+
+        # 1. Validate JWT (works for anonymous users)
         user_response = supabase.auth.get_user(token)
         user = user_response.user
-        
+
         if not user:
-            raise HTTPException(status_code=401, detail="Invalid token")
-        
-        # Set session context for RLS (important for database queries)
-        # Note: We don't need refresh_token for get operations
-        supabase.postgrest.auth(token)
-        
-        # Detect if user is anonymous
+            raise HTTPException(status_code=401, detail="Token invalido")
+
+        # 2. Set session so RLS works for anonymous users
+        supabase.auth.set_session(
+            access_token=token,
+            refresh_token=""
+        )
+
+        # Detect anonymous
         is_anon = (
-            user.app_metadata.get("provider") == "anon" 
+            user.app_metadata.get("provider") == "anon"
             or user.email is None
         )
-        
+
         return User(
             id=user.id,
             email=user.email,
             is_anonymous=is_anon
         )
-    except HTTPException:
-        raise
+
     except Exception as e:
+        print(f"[DEBUG] Token validation failed: {str(e)}")
         raise HTTPException(
-            status_code=401, 
-            detail=f"Token validation failed: {str(e)}"
+            status_code=401,
+            detail=f"Error al validar token: {str(e)}"
         )
 
 
 async def get_optional_user(
     authorization: Optional[str] = Header(None),
-    access_token: Optional[str] = Cookie(None)
+    access_token: Optional[str] = Header(None, alias="X-Access-Token")
 ) -> Optional[User]:
     """
     Get current user if authenticated, None otherwise.

@@ -73,6 +73,14 @@
         const session = await window.ensureSession();
         return session?.access_token;
     };
+
+    // Attach auth token to all HTMX requests
+    document.addEventListener('htmx:configRequest', async (event) => {
+        const token = await window.getAccessToken();
+        if (token) {
+            event.detail.headers['Authorization'] = `Bearer ${token}`;
+        }
+    });
     </script>
     
     {% block extra_scripts %}{% endblock %}
