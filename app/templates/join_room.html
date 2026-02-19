@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Unirse a Room - Parejas{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-body p-5">
+                <h2 class="card-title text-center mb-4">🔗 Unirse a un Room</h2>
+                
+                {% if error %}
+                <div class="alert alert-danger" role="alert">
+                    {{ error }}
+                </div>
+                {% endif %}
+                
+                <form id="joinForm" class="mb-4">
+                    <div class="mb-4">
+                        <label for="token" class="form-label">Código del Room</label>
+                        <input 
+                            type="text" 
+                            class="form-control form-control-lg text-center"
+                            id="token" 
+                            name="token"
+                            value="{{ token or '' }}"
+                            placeholder="Ej: A1B2C3D4E5F6G7H8"
+                            maxlength="24"
+                            required>
+                        <div class="form-text">Ingresa el código que te compartió tu pareja</div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            Unirse al Room
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="text-center">
+                    <a href="/" class="text-muted">← Volver al inicio</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('joinForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const token = document.getElementById('token').value.trim().toUpperCase();
+    
+    try {
+        // Step 1: Verify room exists
+        const roomResp = await fetch(`/api/rooms/${token}`);
+        if (!roomResp.ok) {
+            alert('Código inválido. Por favor verifica el código.');
+            return;
+        }
+        const roomData = await roomResp.json();
+        
+        // Step 2: Ensure user has a session (creates anonymous if needed)
+        const session = await ensureSession();
+        
+        if (!session) {
+            alert('Error al crear sesión. Por favor intenta de nuevo.');
+            return;
+        }
+        
+        // Step 3: Redirect to question page
+        window.location.href = `/question/${roomData.id}`;
+    } catch (error) {
+        alert('Error al unirse al room: ' + error.message);
+    }
+});
+</script>
+{% endblock %}

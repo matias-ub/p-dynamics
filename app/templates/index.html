@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio - Parejas{% endblock %}
+
+{% block content %}
+<div class="hero-section text-center py-5">
+    <div class="container">
+        <h1 class="display-3 fw-bold mb-4">💑 Parejas</h1>
+        <p class="lead mb-3">Una pregunta diaria para conectar y entenderse mejor</p>
+        
+        {% if question %}
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-8">
+                <div class="card shadow-lg">
+                    <div class="card-body p-5">
+                        <h3 class="mb-4">Pregunta del Día</h3>
+                        <p class="lead mb-5">{{ question.text }}</p>
+                        
+                        <button id="startAnswering" class="btn btn-primary btn-lg px-5">
+                            Responder
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-warning mt-5">
+            No hay pregunta disponible hoy. ¡Vuelve mañana!
+        </div>
+        {% endif %}
+        
+        <div class="mt-5 pt-5">
+            <h3 class="mb-4">¿Cómo funciona?</h3>
+            <div class="row text-start">
+                <div class="col-md-4 mb-3">
+                    <div class="d-flex align-items-start">
+                        <div class="flex-shrink-0 me-3">
+                            <span class="badge bg-primary rounded-circle p-3">1</span>
+                        </div>
+                        <div>
+                            <h5>Responde la pregunta</h5>
+                            <p class="text-muted">Cada día hay una nueva pregunta. Responde qué elegirías tú.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="d-flex align-items-start">
+                        <div class="flex-shrink-0 me-3">
+                            <span class="badge bg-primary rounded-circle p-3">2</span>
+                        </div>
+                        <div>
+                            <h5>Predice su respuesta</h5>
+                            <p class="text-muted">¿Qué crees que elegirá tu pareja? Demuestra cuánto lo/la conoces.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="d-flex align-items-start">
+                        <div class="flex-shrink-0 me-3">
+                            <span class="badge bg-primary rounded-circle p-3">3</span>
+                        </div>
+                        <div>
+                            <h5>Mantén la racha</h5>
+                            <p class="text-muted">Respondan todos los días y mantengan su racha activa 🔥</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('startAnswering')?.addEventListener('click', async () => {
+    const button = document.getElementById('startAnswering');
+    button.disabled = true;
+    button.textContent = 'Preparando...';
+    
+    try {
+        // Ensure user has a session (creates anonymous if needed)
+        const session = await ensureSession();
+        
+        if (!session) {
+            alert('Error al crear sesión. Por favor intenta de nuevo.');
+            button.disabled = false;
+            button.textContent = 'Responder';
+            return;
+        }
+        
+        // Create room with authenticated session
+        const roomResponse = await fetch('/api/rooms', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            }
+        });
+        
+        if (roomResponse.ok) {
+            const roomData = await roomResponse.json();
+            window.location.href = `/question/${roomData.id}`;
+        } else {
+            const error = await roomResponse.json();
+            alert('Error: ' + error.detail);
+            button.disabled = false;
+            button.textContent = 'Responder';
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+        button.disabled = false;
+        button.textContent = 'Responder';
+    }
+});
+</script>
+{% endblock %}

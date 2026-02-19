@@ -1,126 +1,266 @@
--- 001_initial_schema.sql
--- Initial database schema for P Dynamics - 4 Perspectivas para Parejas
+-- =========================================================
+-- BASE MIGRATION SQL
+-- Versión final unificada (tu esquema + auth anónima nativa + rooms futuro-proof)
+-- Fecha: 18 Feb 2026
+-- =========================================================
 
--- Enable UUID extension (usually enabled by default in Supabase)
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- =========================================================
+-- EXTENSIONS
+-- =========================================================
+create extension if not exists "pgcrypto";
 
--- =============================================================================
--- 1. Profiles (extension of auth.users)
--- Supabase creates auth.users automatically
--- =============================================================================
-CREATE TABLE public.profiles (
-  id          uuid PRIMARY KEY REFERENCES auth.users ON DELETE CASCADE,
-  name        text,                     -- visible name (can come from Google)
-  avatar_url  text,                     -- profile picture
-  email       text UNIQUE,              -- optional, but useful for email invites
-  created_at  timestamptz DEFAULT now(),
-  updated_at  timestamptz DEFAULT now()
-);
+-- =========================================================
+-- GENERIC TRIGGERS
+-- =========================================================
 
 -- Trigger for updated_at (optional but recommended)
-CREATE OR REPLACE FUNCTION update_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.updated_at = now();
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+create or replace function update_updated_at()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
 
-CREATE TRIGGER profiles_updated_at
-  BEFORE UPDATE ON public.profiles
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
-
--- =============================================================================
--- 2. Couples (1:1, but allows null in user2 until invite is accepted)
--- =============================================================================
-CREATE TABLE public.couples (
-  id          uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user1_id    uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  user2_id    uuid REFERENCES profiles(id) ON DELETE SET NULL,  -- can be null temporarily
-  invite_code text UNIQUE NOT NULL DEFAULT substring(md5(random()::text), 1, 8),  -- short code to share
-  status      text DEFAULT 'pending' CHECK (status IN ('pending', 'active', 'inactive')),  -- improves UX
-  created_at  timestamptz DEFAULT now(),
-  updated_at  timestamptz DEFAULT now()
+-- =========================================================
+-- PROFILES (funciona tanto para usuarios reales como anónimos)
+-- =========================================================
+create table if not exists public.profiles (
+    id uuid primary key references auth.users(id) on delete cascade,
+    name text,
+    avatar_url text,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
 );
 
--- Index for fast lookups by invite_code
-CREATE INDEX idx_couples_invite_code ON public.couples(invite_code);
+alter table public.profiles enable row level security;
 
--- Trigger updated_at
-CREATE TRIGGER couples_updated_at
-  BEFORE UPDATE ON public.couples
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+create policy "Users can read own profile"
+    on public.profiles for select
+    using (auth.uid() = id);
 
--- =============================================================================
--- 3. Scenario Packs (for versioning: cotidiano-v1, intimidad-v2, etc.)
--- =============================================================================
-CREATE TABLE public.scenario_packs (
-  id          uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  name        text UNIQUE NOT NULL,     -- 'cotidiano-v1', 'intimidad-2026', etc.
-  title       text NOT NULL,
-  description text,
-  is_active   boolean DEFAULT true,
-  created_at  timestamptz DEFAULT now()
+create policy "Users can update own profile"
+    on public.profiles for update
+    using (auth.uid() = id);
+
+drop trigger if exists profiles_updated_at on public.profiles;
+create trigger profiles_updated_at
+  before update on public.profiles
+  for each row execute function update_updated_at();
+
+-- =========================================================
+-- AUTO CREATE PROFILE ON SIGNUP (incluye anónimos)
+-- =========================================================
+create or replace function public.handle_new_user()
+returns trigger as $$
+begin
+  insert into public.profiles (id, name, avatar_url)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data->>'full_name', 'Usuario'),
+    new.raw_user_meta_data->>'avatar_url'
+  );
+  return new;
+end;
+$$ language plpgsql security definer;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
+
+-- =========================================================
+-- QUESTIONS
+-- =========================================================
+create table if not exists public.questions (
+    id uuid primary key default gen_random_uuid(),
+    text text not null,
+    intensity_level smallint not null check (intensity_level between 1 and 5),
+    created_at timestamptz not null default now()
 );
 
--- =============================================================================
--- 4. Individual Scenarios (within a pack)
--- =============================================================================
-CREATE TABLE public.scenarios (
-  id          uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  pack_id     uuid NOT NULL REFERENCES scenario_packs(id) ON DELETE CASCADE,
-  key         text NOT NULL UNIQUE,     -- 'platos-sucios', 'tiempo-libre-viernes', etc.
-  title       text NOT NULL,
-  description text NOT NULL,             -- full situation text
-  order_num   integer DEFAULT 0,         -- for display ordering
-  created_at  timestamptz DEFAULT now()
+alter table public.questions enable row level security;
+create policy "Public read questions"
+    on public.questions for select using (true);
+
+-- =========================================================
+-- OPTIONS
+-- =========================================================
+create table if not exists public.options (
+    id uuid primary key default gen_random_uuid(),
+    question_id uuid not null references public.questions(id) on delete cascade,
+    text text not null,
+    position smallint not null,
+    created_at timestamptz not null default now(),
+    unique (question_id, position)
 );
 
-CREATE INDEX idx_scenarios_pack_key ON public.scenarios(pack_id, key);
+create index if not exists idx_options_question on public.options(question_id);
 
--- =============================================================================
--- 5. Response Options per Scenario
--- =============================================================================
-CREATE TABLE public.scenario_options (
-  id          uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  scenario_id uuid NOT NULL REFERENCES scenarios(id) ON DELETE CASCADE,
-  key         text NOT NULL,             -- 'A', 'B', 'C'...
-  text        text NOT NULL,             -- what the user sees
-  tags        jsonb,                     -- {"generosidad": 9, "colaboracion": 8, "equidad": 5, ...}
-  is_positive boolean DEFAULT true,      -- to filter "negative" options if needed
-  order_num   integer DEFAULT 0,
-  created_at  timestamptz DEFAULT now(),
+alter table public.options enable row level security;
+create policy "Public read options"
+    on public.options for select using (true);
 
-  UNIQUE (scenario_id, key)              -- unique key per scenario
+-- =========================================================
+-- DAILY QUESTIONS
+-- =========================================================
+create table if not exists public.daily_questions (
+    id uuid primary key default gen_random_uuid(),
+    question_id uuid not null references public.questions(id) on delete cascade,
+    date date not null unique,
+    created_at timestamptz not null default now()
 );
 
--- =============================================================================
--- 6. Tests (instances taken by a couple)
--- =============================================================================
-CREATE TABLE public.tests (
-  id          uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  couple_id   uuid NOT NULL REFERENCES couples(id) ON DELETE CASCADE,
-  pack_id     uuid NOT NULL REFERENCES scenario_packs(id),
-  status      text DEFAULT 'in_progress' CHECK (status IN ('in_progress', 'completed', 'aborted')),
-  created_at  timestamptz DEFAULT now(),
-  completed_at timestamptz
+alter table public.daily_questions enable row level security;
+create policy "Public read daily questions"
+    on public.daily_questions for select using (true);
+
+-- =========================================================
+-- ROOMS (futuro-proof: pareja + grupos)
+-- =========================================================
+create table if not exists public.rooms (
+    id uuid primary key default gen_random_uuid(),
+    token varchar(24) not null unique,
+    max_participants smallint not null default 2 check (max_participants > 0),
+    room_type text not null default 'couple' check (room_type in ('couple', 'group')),
+    is_permanent boolean not null default false,
+    streak_count int not null default 0,
+    last_streak_date date,
+    created_at timestamptz not null default now(),
+    -- Constraint para parejas (siempre máximo 2)
+    constraint chk_couple_max_participants check (room_type != 'couple' or max_participants = 2)
 );
 
--- =============================================================================
--- 7. Responses (user answers)
--- =============================================================================
-CREATE TABLE public.responses (
-  id             uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  test_id        uuid NOT NULL REFERENCES tests(id) ON DELETE CASCADE,
-  user_id        uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  scenario_id    uuid NOT NULL REFERENCES scenarios(id) ON DELETE RESTRICT,  -- better to reference id than key
-  option_key     text NOT NULL,             -- 'A', 'B'...
-  free_text      text,
-  perspective    smallint NOT NULL CHECK (perspective BETWEEN 1 AND 4),
-  created_at     timestamptz DEFAULT now(),
+create index if not exists idx_rooms_token on public.rooms(token);
 
-  UNIQUE (test_id, user_id, scenario_id, perspective)  -- prevents duplicates per user/perspective
+alter table public.rooms enable row level security;
+
+-- Lectura pública por token (necesario para que cualquiera pueda unirse con el código)
+create policy "Public read rooms for joining"
+    on public.rooms for select using (true);
+
+-- Solo service_role (backend) puede crear rooms
+-- No hay policy de insert
+
+-- =========================================================
+-- RESPONSES (siempre con user_id real de auth.users - anónimo o permanente)
+-- =========================================================
+create table if not exists public.responses (
+    id uuid primary key default gen_random_uuid(),
+    room_id uuid not null references public.rooms(id) on delete cascade,
+    user_id uuid not null references auth.users(id) on delete cascade,
+    daily_question_id uuid not null references public.daily_questions(id) on delete cascade,
+    self_option_id uuid not null references public.options(id),
+    partner_prediction_option_id uuid not null references public.options(id),
+    created_at timestamptz not null default now()
 );
 
--- Index for fast queries of a complete test
-CREATE INDEX idx_responses_test_user_scenario ON public.responses(test_id, user_id, scenario_id);
+create index if not exists idx_responses_room_day 
+    on public.responses(room_id, daily_question_id);
+
+create index if not exists idx_responses_user_id
+    on public.responses(user_id);
+
+-- Un usuario responde solo una vez por room por día
+create unique index if not exists uniq_response_per_user_day 
+    on public.responses(room_id, daily_question_id, user_id);
+
+alter table public.responses enable row level security;
+
+-- =========================================================
+-- RLS RESPONSES (más seguro que "public total")
+-- =========================================================
+create policy "Authenticated users can insert their own response"
+    on public.responses for insert
+    with check (auth.uid() = user_id);
+
+create policy "Room participants can read responses"
+    on public.responses for select
+    using (
+        exists (
+            select 1 
+            from public.responses r2 
+            where r2.room_id = responses.room_id 
+              and r2.user_id = auth.uid()
+        )
+    );
+
+-- =========================================================
+-- TRIGGER: CAPACITY CHECK (adaptado a user_id)
+-- =========================================================
+create or replace function public.check_room_capacity()
+returns trigger as $$
+declare
+    participant_count integer;
+    room_limit integer;
+begin
+    -- Lock del room
+    select max_participants
+    into room_limit
+    from public.rooms
+    where id = new.room_id
+    for update;
+
+    select count(distinct user_id)
+    into participant_count
+    from public.responses
+    where room_id = new.room_id 
+      and daily_question_id = new.daily_question_id;
+
+    if participant_count >= room_limit then
+        raise exception 'Room capacity exceeded for this day';
+    end if;
+
+    return new;
+end;
+$$ language plpgsql;
+
+drop trigger if exists enforce_room_capacity on public.responses;
+create trigger enforce_room_capacity
+    before insert on public.responses
+    for each row
+    execute procedure public.check_room_capacity();
+
+-- =========================================================
+-- TRIGGER: VALIDACIÓN DE OPCIONES
+-- =========================================================
+create or replace function public.validate_response_options()
+returns trigger as $$
+declare
+    correct_question uuid;
+begin
+    select q.id
+    into correct_question
+    from public.daily_questions dq
+    join public.questions q on q.id = dq.question_id
+    where dq.id = new.daily_question_id;
+
+    if not exists (
+        select 1 from public.options
+        where id = new.self_option_id
+          and question_id = correct_question
+    ) then
+        raise exception 'Invalid self option for this question';
+    end if;
+
+    if not exists (
+        select 1 from public.options
+        where id = new.partner_prediction_option_id
+          and question_id = correct_question
+    ) then
+        raise exception 'Invalid partner prediction option';
+    end if;
+
+    return new;
+end;
+$$ language plpgsql;
+
+drop trigger if exists validate_response_options_trigger on public.responses;
+create trigger validate_response_options_trigger
+    before insert on public.responses
+    for each row
+    execute procedure public.validate_response_options();
+
+-- =========================================================
+-- FIN DEL SCHEMA
+-- =========================================================

@@ -1,103 +1,286 @@
-# P Dynamics - 4 Perspectivas para Parejas
+# 💑 Parejas - Daily Question Game
 
-Test interactivo para parejas que compara deseos personales, percepción del otro, equidad objetiva y percepción mutua de lo "mejor para la relación". Calcula scores de alineación, empatía y salud relacional.
+A daily question game for couples to connect, understand each other better, and maintain consistency in their relationship through engaging daily prompts.
 
-## Descripción
+## 🎯 Concept
 
-Aplicación web construida con **FastAPI**, **Jinja2** y **HTMX** que ayuda a las parejas a entender mejor su relación a través de un test de 4 perspectivas:
+Every day, both partners answer a simple question and predict what their partner will choose. The app tracks:
+- ✅ Whether predictions match reality (how well you know your partner)
+- 🔥 Streak of consecutive days both have answered
+- 📊 History of all responses
 
-1. **Perspectiva Personal**: ¿Qué prefiero yo?
-2. **Perspectiva Empática**: ¿Qué creo que prefiere mi pareja?
-3. **Perspectiva de Equidad**: ¿Qué es lo más justo para ambos?
-4. **Perspectiva Relacional**: ¿Qué creo que mi pareja considera mejor para la relación?
+## ✨ Features
 
-## Características
+- 🎲 **Daily Questions**: One new question per day with multiple-choice answers
+- 🤝 **Room System**: Create a private room and share a code with your partner
+- 👤 **Anonymous Auth**: No registration required - just create and join
+- 📈 **Streak Tracking**: Maintain your couple's daily answering streak
+- 🎨 **Beautiful UI**: Responsive design with Bootstrap 5 and gradient themes
+- ⚡ **HTMX Integration**: Smooth interactions without page reloads
 
-- 🔐 Autenticación de usuarios con Supabase
-- 📝 Test interactivo con múltiples escenarios
-- 👥 Sistema de invitación para parejas
-- 📊 Cálculo automático de scores:
-  - Score de Alineación
-  - Score de Empatía
-  - Score de Salud Relacional
-- 📈 Visualización de resultados con dimensiones
-- 📱 Interfaz responsive con Bootstrap
-- ⚡ HTMX para interactividad sin JavaScript complejo
+## 🏗️ Architecture
 
-## Estructura del Proyecto
+### Tech Stack
+- **Backend**: FastAPI (Python)
+- **Database**: Supabase (Postgres + Auth)
+- **Frontend**: Jinja2 Templates + Bootstrap 5 + HTMX
+- **Auth**: Supabase Anonymous Authentication
 
+### Project Structure
 ```
 p-dynamics/
-├── app/                     # Aplicación FastAPI
-│   ├── main.py             # Punto de entrada de la aplicación
-│   ├── routes/             # Rutas de la API
-│   │   ├── auth.py         # Login/registro
-│   │   ├── test.py         # Test interactivo
-│   │   └── results.py      # Resultados
-│   ├── templates/          # Templates Jinja2
-│   │   ├── base.html       # Template base
-│   │   ├── login.html      # Página de login
-│   │   ├── test.html       # Página del test
-│   │   └── results.html    # Página de resultados
-│   └── static/             # Archivos estáticos
+├── app/
+│   ├── main.py              # FastAPI app initialization
+│   ├── config.py            # Environment configuration
+│   ├── dependencies.py      # Auth dependencies
+│   ├── models.py            # Pydantic models
+│   │
+│   ├── routes/              # Route handlers
+│   │   ├── pages.py         # SSR page routes
+│   │   ├── auth.py          # Auth API endpoints
+│   │   ├── rooms.py         # Room management
+│   │   ├── questions.py     # Daily questions
+│   │   └── responses.py     # User responses
+│   │
+│   ├── services/            # Business logic layer
+│   │   ├── auth_service.py
+│   │   ├── room_service.py
+│   │   ├── question_service.py
+│   │   └── response_service.py
+│   │
+│   ├── utils/               # Utilities
+│   │   └── supabase.py      # Supabase client
+│   │
+│   ├── templates/           # Jinja2 HTML templates
+│   │   ├── base.html
+│   │   ├── index.html
+│   │   ├── create_room.html
+│   │   ├── join_room.html
+│   │   ├── dashboard.html
+│   │   ├── question.html
+│   │   └── results.html
+│   │
+│   └── static/              # Static assets
 │       └── css/
-│           └── style.css   # Estilos personalizados
-├── p_dynamics/             # Lógica de negocio
-│   └── lib/                # Utilidades
-│       ├── supabase_client.py  # Cliente de Supabase
-│       └── scenarios.py    # Escenarios del test
-├── supabase/               # Configuración de Supabase
-│   └── migrations/         # Migraciones SQL
-│       └── 001_initial_schema.sql
-├── requirements-fastapi.txt # Dependencias FastAPI
-├── .env.example            # Variables de entorno de ejemplo
-└── README.md               # Este archivo
+│           └── style.css
+│
+├── supabase/
+│   └── migrations/
+│       ├── 001_initial_schema.sql
+│       └── 002_seed_data.sql
+│
+├── requirements.txt
+├── .env.example
+└── README.md
 ```
 
-## Requisitos
+## 🚀 Getting Started
 
-- Python 3.8 o superior
-- pip o [uv](https://github.com/astral-sh/uv) (recomendado)
-- Cuenta de Supabase (para autenticación y base de datos)
+### Prerequisites
+- Python 3.8+
+- Supabase account (free tier works)
+- Git
 
-## Instalación
+### Installation
 
-1. Clona el repositorio:
+1. **Clone the repository**
 ```bash
 git clone https://github.com/matias-ub/p-dynamics.git
 cd p-dynamics
 ```
 
-2. Crea un entorno virtual con uv (recomendado):
+2. **Create virtual environment**
 ```bash
-uv venv
+python -m venv venv
+
+# Windows
+venv\Scripts\activate
+
+# macOS/Linux
+source venv/bin/activate
 ```
 
-3. Instala las dependencias:
+3. **Install dependencies**
 ```bash
-# Con uv (recomendado)
-uv pip install -r requirements-fastapi.txt
-
-# O con pip tradicional
-pip install -r requirements-fastapi.txt
+pip install -r requirements.txt
 ```
 
-4. Configura las variables de entorno:
-- Copia el archivo `.env.example` a `.env` y completa con tus credenciales de Supabase:
+4. **Configure environment variables**
+
+Create a `.env` file in the root directory:
 ```env
-SUPABASE_URL=tu_url_de_supabase
-SUPABASE_KEY=tu_clave_de_supabase
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+DEBUG=false
 ```
 
-## Uso
+5. **Set up Supabase**
 
-1. Inicia el servidor de desarrollo:
+- Create a new Supabase project
+- Run the migrations in order:
+  1. Execute `supabase/migrations/001_initial_schema.sql` in SQL Editor
+  2. Execute `supabase/migrations/002_seed_data.sql` in SQL Editor
+- Enable anonymous auth in Authentication settings
+
+6. **Run the application**
 ```bash
-# Con uv
-uv run uvicorn app.main:app --reload
-
-# O directamente con uvicorn
 uvicorn app.main:app --reload
+```
+
+The app will be available at `http://localhost:8000`
+
+## 📖 How to Use
+
+### For the First Partner (Room Creator)
+1. Go to the home page
+2. Click "Crear Room"
+3. Share the generated code with your partner
+
+### For the Second Partner (Joining)
+1. Go to the home page
+2. Click "Unirse con Código"
+3. Enter the code shared by your partner
+4. You're in!
+
+### Daily Flow
+1. Visit your room's dashboard
+2. Click "Responder Ahora" when today's question is available
+3. Answer what YOU would choose
+4. Predict what YOUR PARTNER will choose
+5. Check back later to see if your predictions matched!
+
+## 🗄️ Database Schema
+
+### Tables
+- **profiles**: User profiles (auto-created from auth.users)
+- **questions**: Pool of questions with intensity levels
+- **options**: Multiple-choice options for each question
+- **daily_questions**: Maps questions to specific dates
+- **rooms**: Private rooms for couples (with unique tokens)
+- **responses**: User answers and partner predictions
+
+### Key Features
+- **Row Level Security (RLS)**: Enforces data privacy
+- **Anonymous Auth**: Users don't need email/password
+- **Streak Calculation**: On-the-fly calculation from responses
+- **Unique Constraints**: One response per user per day per room
+
+## 🔐 Authentication Flow
+
+1. User creates or joins a room
+2. Anonymous Supabase user is created automatically
+3. JWT token is stored in cookie
+4. All API calls include token for RLS enforcement
+5. Users can optionally convert to permanent accounts (future feature)
+
+## 🌟 API Endpoints
+
+### Pages (SSR)
+- `GET /` - Landing page
+- `GET /create-room` - Create room page
+- `GET /join-room` - Join room page
+- `GET /dashboard/{room_id}` - Room dashboard
+- `GET /question/{room_id}` - Answer today's question
+- `GET /results/{room_id}` - View results and history
+
+### API (JSON)
+- `POST /api/auth/anonymous` - Create anonymous user
+- `POST /api/rooms` - Create new room
+- `GET /api/rooms/{token}` - Get room by token
+- `GET /api/questions/today` - Get today's daily question
+- `POST /api/responses` - Submit answer
+- `GET /api/responses/room/{room_id}` - Get room responses
+- `GET /api/responses/room/{room_id}/streak` - Get streak
+
+## 🎨 Customization
+
+### Adding New Questions
+Edit `supabase/migrations/002_seed_data.sql` and add:
+```sql
+WITH q AS (
+  INSERT INTO public.questions (text, intensity_level) 
+  VALUES ('Your question here?', 3)
+  RETURNING id
+)
+INSERT INTO public.daily_questions (question_id, date)
+SELECT id, 'YYYY-MM-DD' FROM q;
+
+INSERT INTO public.options (question_id, text, position)
+SELECT q.id, opt.text, opt.pos
+FROM public.questions q, (VALUES 
+  (1, 'Option 1'),
+  (2, 'Option 2'),
+  (3, 'Option 3')
+) AS opt(pos, text)
+WHERE q.text = 'Your question here?';
+```
+
+### Styling
+Edit `app/static/css/style.css` to customize colors, gradients, and animations.
+
+## 🚢 Deployment
+
+### Railway
+```bash
+# Install Railway CLI
+npm i -g @railway/cli
+
+# Login and deploy
+railway login
+railway init
+railway up
+```
+
+### Fly.io
+```bash
+# Install Fly CLI
+curl -L https://fly.io/install.sh | sh
+
+# Deploy
+fly launch
+fly deploy
+```
+
+### Environment Variables
+Remember to set these in your deployment platform:
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+## 🛣️ Roadmap
+
+- [ ] Email/password authentication option
+- [ ] Convert anonymous users to permanent accounts
+- [ ] Share results on social media
+- [ ] Weekly/monthly reports
+- [ ] Custom question packs
+- [ ] Couple statistics and insights
+- [ ] Multi-language support
+- [ ] Mobile app (React Native)
+
+## 📝 License
+
+This project is licensed under the MIT License.
+
+## 👥 Contributing
+
+Contributions are welcome! Please:
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📧 Contact
+
+**Matias** - [@matias-ub](https://github.com/matias-ub)
+
+Project Link: [https://github.com/matias-ub/p-dynamics](https://github.com/matias-ub/p-dynamics)
+
+---
+
+Made with ❤️ for couples who want to connect better
 ```
 
 2. Abre tu navegador en `http://localhost:8000`

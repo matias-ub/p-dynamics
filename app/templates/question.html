@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Pregunta del Día - Parejas{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-md-8">
+        <div class="card shadow" id="questionCard">
+            <div class="card-body p-5">
+                <h3 class="text-center mb-4">Pregunta del Día</h3>
+                <p class="lead text-center mb-5">{{ question.text }}</p>
+                
+                <form id="answerForm">
+                    <!-- Your Answer -->
+                    <div class="mb-5">
+                        <h5 class="mb-3">1️⃣ ¿Qué harías tú?</h5>
+                        <p class="text-muted mb-3">Tu respuesta personal</p>
+                        {% for option in question.options %}
+                        <div class="form-check mb-3 p-3 border rounded hover-option">
+                            <input 
+                                class="form-check-input" 
+                                type="radio" 
+                                name="self_option" 
+                                id="self_{{ option.id }}" 
+                                value="{{ option.id }}"
+                                required>
+                            <label class="form-check-label w-100" for="self_{{ option.id }}">
+                                {{ option.text }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Partner Prediction -->
+                    <div class="mb-5">
+                        <h5 class="mb-3">2️⃣ ¿Qué haría tu pareja?</h5>
+                        <p class="text-muted mb-3">Predice qué elegirá</p>
+                        {% for option in question.options %}
+                        <div class="form-check mb-3 p-3 border rounded hover-option">
+                            <input 
+                                class="form-check-input" 
+                                type="radio" 
+                                name="partner_prediction" 
+                                id="partner_{{ option.id }}" 
+                                value="{{ option.id }}"
+                                required>
+                            <label class="form-check-label w-100" for="partner_{{ option.id }}">
+                                {{ option.text }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            Enviar Respuestas
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Success message with invite option -->
+        <div class="card shadow d-none" id="successCard">
+            <div class="card-body p-5 text-center">
+                <div class="mb-4">
+                    <h3 class="text-success">✓ ¡Respuestas enviadas!</h3>
+                    <p class="text-muted">Tus respuestas han sido guardadas</p>
+                </div>
+                
+                <div id="inviteSection" class="d-none">
+                    <div class="alert alert-info mb-4">
+                        <h5 class="alert-heading">Invita a tu pareja</h5>
+                        <p class="mb-3">Comparte este código para que tu pareja pueda responder:</p>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control form-control-lg text-center fw-bold" 
+                                   id="inviteToken" readonly>
+                            <button class="btn btn-outline-secondary" type="button" onclick="copyToken()">
+                                📋 Copiar
+                            </button>
+                        </div>
+                        <small class="text-muted">O comparte este enlace:</small>
+                        <div class="input-group mt-2">
+                            <input type="text" class="form-control text-center" 
+                                   id="inviteLink" readonly>
+                            <button class="btn btn-outline-secondary" type="button" onclick="copyLink()">
+                                📋 Copiar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2 mt-4">
+                    <a href="/" class="btn btn-primary btn-lg">Volver al Inicio</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const roomId = '{{ room.id }}';
+const roomToken = '{{ room.token if room.token else "" }}';
+
+document.getElementById('answerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const selfOption = document.querySelector('input[name="self_option"]:checked');
+    const partnerPrediction = document.querySelector('input[name="partner_prediction"]:checked');
+    
+    if (!selfOption || !partnerPrediction) {
+        alert('Por favor responde ambas preguntas');
+        return;
+    }
+    
+    try {
+        const accessToken = await getAccessToken();
+        
+        if (!accessToken) {
+            alert('Error de autenticación. Por favor recarga la página.');
+            return;
+        }
+        
+        const response = await fetch('/api/responses', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            },
+            body: JSON.stringify({
+                room_id: roomId,
+                daily_question_id: '{{ question.id }}',
+                self_option_id: selfOption.value,
+                partner_prediction_option_id: partnerPrediction.value
+            })
+        });
+        
+        if (response.ok) {
+            // Check how many participants have answered
+            const statusResponse = await fetch(`/api/responses/room/${roomId}/status/{{ question.id }}`, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            });
+            
+            if (statusResponse.ok) {
+                const status = await statusResponse.json();
+                
+                // Hide question form, show success message
+                document.getElementById('questionCard').classList.add('d-none');
+                document.getElementById('successCard').classList.remove('d-none');
+                
+                // Show invite section if only 1 participant (this user)
+                if (status.answer_count === 1) {
+                    const inviteSection = document.getElementById('inviteSection');
+                    inviteSection.classList.remove('d-none');
+                    
+                    // Set token and link
+                    document.getElementById('inviteToken').value = roomToken;
+                    document.getElementById('inviteLink').value = 
+                        `${window.location.origin}/join-room?token=${roomToken}`;
+                }
+            }
+        } else {
+            const error = await response.json();
+            alert('Error: ' + error.detail);
+        }
+    } catch (error) {
+        alert('Error al enviar respuestas: ' + error.message);
+    }
+});
+
+function copyToken() {
+    const tokenInput = document.getElementById('inviteToken');
+    tokenInput.select();
+    document.execCommand('copy');
+    alert('Código copiado al portapapeles');
+}
+
+function copyLink() {
+    const linkInput = document.getElementById('inviteLink');
+    linkInput.select();
+    document.execCommand('copy');
+    alert('Enlace copiado al portapapeles');
+}
+</script>
+{% endblock %}

@@ -1,9 +1,15 @@
-/* Custom styles for P-Dynamics */
+/* Custom styles for Parejas - Daily Question Game */
+
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
 
 body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);
 }
 
 main {
@@ -12,32 +18,106 @@ main {
 
 .footer {
     margin-top: auto;
+    background: #f8f9fa;
+}
+
+/* Navbar gradient */
+.navbar.bg-gradient {
+    background: var(--primary-gradient) !important;
+}
+
+/* Hero section */
+.hero-section {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    border-radius: 20px;
+    margin: 2rem 0;
 }
 
 /* Card hover effects */
 .card {
-    transition: transform 0.2s ease-in-out;
+    transition: all 0.3s ease;
+    border: none;
 }
 
-.card:hover {
-    transform: translateY(-2px);
+.hover-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Token display */
+.token-display {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 10px;
+    border: 2px dashed #667eea;
+}
+
+/* Hover options in forms */
+.hover-option {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.hover-option:hover {
+    background-color: #f8f9fa;
+    border-color: #667eea !important;
+}
+
+.hover-option input[type="radio"]:checked ~ label {
+    font-weight: 600;
+    color: #667eea;
 }
 
 /* Button styles */
-.btn-lg.text-start {
-    padding: 1rem 1.5rem;
-    white-space: normal;
-    text-align: left !important;
+.btn-primary {
+    background: var(--primary-gradient);
+    border: none;
+    transition: all 0.3s ease;
 }
 
-.btn-lg.text-start:hover {
-    transform: translateX(5px);
-    transition: transform 0.2s ease;
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    border: none;
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(17, 153, 142, 0.4);
 }
 
 /* Progress bar animation */
 .progress-bar {
     transition: width 0.6s ease;
+    background: var(--primary-gradient);
+}
+
+/* Timeline for results */
+.timeline .card {
+    position: relative;
+}
+
+.timeline .card::before {
+    content: '';
+    position: absolute;
+    left: -15px;
+    top: 20px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #667eea;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 2px #667eea;
+}
+
+/* Badges */
+.badge {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
 }
 
 /* Responsive adjustments */
@@ -45,4 +125,36 @@ main {
     .container {
         padding: 0 15px;
     }
+    
+    .hero-section h1 {
+        font-size: 2.5rem;
+    }
+    
+    .card-body.p-5 {
+        padding: 2rem !important;
+    }
 }
+
+/* Alert styles */
+.alert {
+    border-radius: 10px;
+    border: none;
+}
+
+.alert-success {
+    background: linear-gradient(135deg, rgba(17, 153, 142, 0.1) 0%, rgba(56, 239, 125, 0.1) 100%);
+    color: #11998e;
+}
+
+.alert-info {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    color: #667eea;
+}
+
+/* Loading spinner (optional) */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.15rem;
+}
+
